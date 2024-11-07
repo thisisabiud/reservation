@@ -1,0 +1,347 @@
+{% extends 'reservations/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ event.title }} - Floor Plan</h2>
+        <a href="{% url 'reservations:events_list' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Back to Events
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Floor Map Section -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Exhibition Floor Map</h5>
+                </div>
+                <div class="card-body">
+                    <div class="floor-map" id="floorMap">
+                        <!-- Floor map content remains the same -->
+                        <div class="floor-container">
+                            <!-- Windows Row -->
+                            <div class="d-flex justify-content-between">
+                                <div class="window">Window</div>
+                                <div class="window">Window</div>
+                                <div class="window">Window</div>
+                            </div>
+                            
+                            <!-- First Row of Booths -->
+                            <div class="d-flex flex-wrap justify-content-center">
+                                <div class="booth available" data-booth="A1" data-price="1000">
+                                    <span class="booth-info">Premium</span>
+                                    A1
+                                    <span class="booth-price">TZS 1000</span>
+                                </div>
+                                <div class="booth reserved" data-booth="A2" data-price="1000">
+                                    <span class="booth-info">Corner</span>
+                                    A2
+                                    <span class="booth-price">TZS 1000</span>
+                                </div>
+                                <div class="door">Main Entrance</div>
+                                <div class="booth available" data-booth="A3" data-price="1000">
+                                    <span class="booth-info">Standard</span>
+                                    A3
+                                    <span class="booth-price">TZS 1000</span>
+                                </div>
+                            </div>
+
+                            <!-- Aisle -->
+                            <div class="aisle"></div>
+
+                            <!-- Second Row of Booths -->
+                            <div class="d-flex flex-wrap justify-content-center">
+                                <div class="booth processing" data-booth="B1" data-price="1200">
+                                    <span class="booth-info">Premium</span>
+                                    B1
+                                    <span class="booth-price">TZS 1200</span>
+                                </div>
+                                <div class="booth available" data-booth="B2" data-price="1200">
+                                    <span class="booth-info">Corner</span>
+                                    B2
+                                    <span class="booth-price">TZS 1200</span>
+                                </div>
+                                <div class="booth available" data-booth="B3" data-price="1200">
+                                    <span class="booth-info">Standard</span>
+                                    B3
+                                    <span class="booth-price">TZS 1200</span>
+                                </div>
+                            </div>
+
+                            <!-- Aisle -->
+                            <div class="aisle"></div>
+
+                            <!-- Third Row of Booths -->
+                            <div class="d-flex flex-wrap justify-content-center">
+                                <div class="booth available" data-booth="C1" data-price="1500">
+                                    <span class="booth-info">Premium</span>
+                                    C1
+                                    <span class="booth-price">TZS 1500</span>
+                                </div>
+                                <div class="booth reserved" data-booth="C2" data-price="1500">
+                                    <span class="booth-info">Corner</span>
+                                    C2
+                                    <span class="booth-price">TZS 1500</span>
+                                </div>
+                                <div class="door">Emergency Exit</div>
+                                <div class="booth available" data-booth="C3" data-price="1500">
+                                    <span class="booth-info">Standard</span>
+                                    C3
+                                    <span class="booth-price">TZS 1500</span>
+                                </div>
+                            </div>
+
+                            <!-- Windows Row -->
+                            <div class="d-flex justify-content-between">
+                                <div class="window">Window</div>
+                                <div class="window">Window</div>
+                                <div class="window">Window</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legend remains the same -->
+               <!-- Legend -->
+               <div class="card mt-3">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Key</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap justify-content-center">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%); border: 2px solid #28a745;"></div>
+                            <span>Available</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(145deg, #dc3545 0%, #c82333 100%);"></div>
+                            <span>Reserved</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(145deg, #ffc107 0%, #e0a800 100%);"></div>
+                            <span>Processing</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(145deg, #28a745 0%, #218838 100%);"></div>
+                            <span>Selected</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Side Panel -->
+        <div class="col-lg-4">
+            <div class="side-panel">
+                <h4 class="mb-4">Selected Booths</h4>
+                <div id="selectedBoothsList" class="mb-4">
+                    <p class="text-muted">No booths selected</p>
+                </div>
+                
+                <div class="total-section mb-4">
+                    <h5>Total Price: <span id="totalPrice">TZS 0</span></h5>
+                </div>
+
+                <form id="bookingForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Company Name</label>
+                        <input type="text" name="company" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Contact Person</label>
+                        <input type="text" name="contact_person" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" name="phone" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        Book Selected Booths
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+/* Additional styles for dynamic content */
+.reservation-tooltip {
+    display: none;
+    position: absolute;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 0.8em;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    max-width: 200px;
+    pointer-events: none;
+}
+
+.booth:hover .reservation-tooltip {
+    display: block;
+}
+
+.booth.processing {
+    animation: processing-pulse 1.5s infinite;
+}
+
+@keyframes processing-pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+.booth.reserved {
+    cursor: help;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.booth-status-indicator {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.booth.available .booth-status-indicator {
+    background-color: #28a745;
+}
+
+.booth.reserved .booth-status-indicator {
+    background-color: #dc3545;
+}
+
+.booth.processing .booth-status-indicator {
+    background-color: #ffc107;
+}
+
+/* Improve form feedback */
+.form-control.is-invalid {
+    background-image: none;
+}
+
+.invalid-feedback {
+    font-size: 0.875em;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .reservation-tooltip {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: 90%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/floormap.js' %}"></script>
+<script>
+    // Initialize the floor map
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const eventId = urlParams.get('event_id');
+        const floorMap = new FloorMap('floorMap', eventId);
+
+        console.log('Event ID:', eventId);
+
+        // Add loading overlay
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.className = 'loading-overlay d-none';
+        loadingOverlay.innerHTML = `
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        `;
+        document.querySelector('.floor-map').appendChild(loadingOverlay);
+
+        // Add form validation
+        const form = document.getElementById('bookingForm');
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+
+        // Setup periodic refresh
+        setInterval(() => floorMap.loadBoothData(), 30000); // Refresh every 30 seconds
+
+        // Handle connection errors
+        window.addEventListener('online', () => {
+            floorMap.loadBoothData();
+            floorMap.showSuccess('Connection restored');
+        });
+
+        window.addEventListener('offline', () => {
+            floorMap.showError('Connection lost. Please check your internet connection.');
+        });
+
+        // Add touch support for mobile
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        document.querySelectorAll('.booth').forEach(booth => {
+            booth.addEventListener('touchstart', function(e) {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, false);
+
+            booth.addEventListener('touchend', function(e) {
+                const touchEndX = e.changedTouches[0].screenX;
+                const touchEndY = e.changedTouches[0].screenY;
+                
+                // Check if it's a tap (not a scroll)
+                if (Math.abs(touchStartX - touchEndX) < 10 && 
+                    Math.abs(touchStartY - touchEndY) < 10) {
+                    e.preventDefault();
+                    booth.click();
+                }
+            }, false);
+        });
+    });
+
+    // Add error boundary
+    window.addEventListener('error', function(event) {
+        console.error('Application error:', event.error);
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'alert alert-danger';
+        errorMessage.textContent = 'An error occurred. Please refresh the page.';
+        document.querySelector('.floor-map').prepend(errorMessage);
+    });
+</script>
+{% endblock %}

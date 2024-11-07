@@ -1,0 +1,270 @@
+/* Variables & Base Styles */
+:root {
+    --primary-blue: #2563eb;
+    --primary-dark-blue: #1e40af;
+    --success-green: #28a745;
+    --danger-red: #dc3545;
+    --warning-yellow: #ffc107;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-500: #64748b;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    
+    /* New gradient variables */
+    --gradient-available: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+    --gradient-reserved: linear-gradient(145deg, var(--danger-red) 0%, #c82333 100%);
+    --gradient-processing: linear-gradient(145deg, var(--warning-yellow) 0%, #e0a800 100%);
+    --gradient-selected: linear-gradient(145deg, var(--success-green) 0%, #218838 100%);
+    --gradient-header: linear-gradient(135deg, var(--gray-700) 0%, var(--gray-800) 100%);
+}
+
+/* Floor Map Styles */
+.floor-map {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 2.5rem;
+    border-radius: 1rem;
+    position: relative;
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.1);
+    border: 2px solid var(--gray-200);
+}
+
+.floor-map::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.5;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.floor-container {
+    position: relative;
+    z-index: 1;
+}
+
+/* Booth Styles */
+.booth {
+    width: 120px;
+    height: 120px;
+    margin: 10px;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+    position: relative;
+    font-weight: 600;
+    font-size: 1.2em;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transform: perspective(1000px) rotateX(5deg);
+    padding: 10px;
+    text-align: center;
+    backdrop-filter: blur(5px);
+}
+
+.booth::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.2);
+    pointer-events: none;
+}
+
+.booth.available {
+    background: var(--gradient-available);
+    color: var(--success-green);
+    border: 2px solid var(--success-green);
+}
+
+.booth.reserved {
+    background: var(--gradient-reserved);
+    color: white;
+    cursor: not-allowed;
+}
+
+.booth.processing {
+    background: var(--gradient-processing);
+    color: var(--gray-800);
+    animation: pulse 1.5s infinite;
+}
+
+.booth.selected {
+    background: var(--gradient-selected);
+    color: white;
+    transform: perspective(1000px) rotateX(5deg) scale(1.05);
+}
+
+/* Legend Styles - Improved */
+.legend-wrapper {
+    margin-top: 2rem;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    background: white;
+}
+
+.legend-header {
+    background: var(--gradient-header);
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.legend-header h5 {
+    color: white;
+    font-weight: 600;
+    margin: 0;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.legend-body {
+    padding: 1.5rem;
+    background: var(--gray-50);
+}
+
+.legend-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    padding: 0.5rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-radius: 0.75rem;
+    background: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+}
+
+.legend-color {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.legend-text {
+    font-weight: 500;
+    color: var(--gray-700);
+    font-size: 0.95rem;
+}
+
+/* Status-specific legend colors */
+.legend-color.available {
+    background: var(--gradient-available);
+    border: 2px solid var(--success-green);
+}
+
+.legend-color.reserved {
+    background: var(--gradient-reserved);
+}
+
+.legend-color.processing {
+    background: var(--gradient-processing);
+}
+
+.legend-color.selected {
+    background: var(--gradient-selected);
+}
+
+/* Checkout Modal Styles */
+.checkout-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.checkout-modal.active {
+    display: flex;
+    opacity: 1;
+}
+
+.checkout-container {
+    background: white;
+    width: 90%;
+    max-width: 800px;
+    margin: auto;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    transform: scale(0.95);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.checkout-modal.active .checkout-container {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* Animations */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Hover Effects */
+.booth:hover:not(.reserved):not(.processing) {
+    transform: perspective(1000px) rotateX(5deg) scale(1.1);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+}
+
+.legend-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    .floor-map {
+        padding: 1.5rem;
+    }
+
+    .booth {
+        width: 100px;
+        height: 100px;
+        margin: 5px;
+        font-size: 1em;
+    }
+
+    .legend-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .legend-item {
+        padding: 0.75rem;
+    }
+
+    .legend-color {
+        width: 28px;
+        height: 28px;
+    }
+
+    .legend-text {
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .legend-container {
+        grid-template-columns: 1fr;
+    }
+}

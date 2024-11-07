@@ -1,0 +1,161 @@
+{% extends 'reservations/base.html' %}
+{% load static %}
+{% block content %}
+
+    <div class="container-fluid py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>{{ event.title }} - Floor Plan</h2>
+            <a href="{% url 'reservations:events_list' %}" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left"></i> Back to Events
+            </a>
+        </div>
+        <div class="row">
+            <!-- Floor Map Section -->
+            <div class="col-lg-8 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Exhibition Floor Map</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="floor-map">
+                            <div class="floor-container">
+                                <!-- Windows Row -->
+                                <!-- <div class="d-flex justify-content-between">
+                                    <div class="window">Window</div>
+                                    <div class="window">Window</div>
+                                    <div class="window">Window</div>
+                                </div> -->
+                                
+                                <!-- First Row of Booths -->
+                                <!-- <div class="d-flex flex-wrap justify-content-center">
+                                    <div class="booth available" data-booth="A1" data-price="1000">
+                                        <span class="booth-info">Premium</span>
+                                        A1
+                                        <span class="booth-price">TZS 1000</span>
+                                    </div>
+                                    <div class="booth reserved" data-booth="A2" data-price="1000">
+                                        <span class="booth-info">Corner</span>
+                                        A2
+                                        <span class="booth-price">TZS 1000</span>
+                                    </div>
+                                    <div class="door">Main Entrance</div>
+                                    <div class="booth available" data-booth="A3" data-price="1000">
+                                        <span class="booth-info">Standard</span>
+                                        A3
+                                        <span class="booth-price">TZS 1000</span>
+                                    </div>
+                                </div> -->
+
+                                <!-- Aisle -->
+                                <div class="aisle"></div>
+
+                                <!-- Second Row of Booths -->
+                                <!-- <div class="d-flex flex-wrap justify-content-center">
+                                    <div class="booth processing" data-booth="B1" data-price="1200">
+                                        <span class="booth-info">Premium</span>
+                                        B1
+                                        <span class="booth-price">TZS 1200</span>
+                                    </div>
+                                    <div class="booth available" data-booth="B2" data-price="1200">
+                                        <span class="booth-info">Corner</span>
+                                        B2
+                                        <span class="booth-price">TZS 1200</span>
+                                    </div>
+                                    <div class="booth available" data-booth="B3" data-price="1200">
+                                        <span class="booth-info">Standard</span>
+                                        B3
+                                        <span class="booth-price">TZS 1200</span>
+                                    </div>
+                                </div> -->
+
+                                <!-- Aisle -->
+                                <!-- <div class="aisle"></div> -->
+
+                                <!-- Third Row of Booths -->
+                                <!-- <div class="d-flex flex-wrap justify-content-center">
+                                    <div class="booth available" data-booth="C1" data-price="1500">
+                                        <span class="booth-info">Premium</span>
+                                        C1
+                                        <span class="booth-price">TZS 1500</span>
+                                    </div>
+                                    <div class="booth reserved" data-booth="C2" data-price="1500">
+                                        <span class="booth-info">Corner</span>
+                                        C2
+                                        <span class="booth-price">TZS 1500</span>
+                                    </div>
+                                    <div class="door">Emergency Exit</div>
+                                    <div class="booth available" data-booth="C3" data-price="1500">
+                                        <span class="booth-info">Standard</span>
+                                        C3
+                                        <span class="booth-price">TZS 1500</span>
+                                    </div>
+                                </div> -->
+
+                                <!-- Windows Row -->
+                                <!-- <div class="d-flex justify-content-between">
+                                    <div class="window">Window</div>
+                                    <div class="window">Window</div>
+                                    <div class="window">Window</div>
+                                </div> -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="legend-wrapper">
+                    <div class="legend-header">
+                        <h5>Key</h5>
+                    </div>
+                    <div class="legend-body">
+                        <div class="legend-container">
+                            <div class="legend-item">
+                                <div class="legend-color available"></div>
+                                <span class="legend-text">Available</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color reserved"></div>
+                                <span class="legend-text">Reserved</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color processing"></div>
+                                <span class="legend-text">Processing</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color selected"></div>
+                                <span class="legend-text">Selected</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Side Panel -->
+            <div class="col-lg-4">
+                <div class="side-panel">
+                    <h4 class="mb-4">Selected Booths</h4>
+                    <div id="selectedBoothsList" class="mb-4">
+                        <p class="text-muted">No booths selected</p>
+                    </div>
+                    
+                    <div class="total-section mb-4">
+                        <h5>Total Price: <span id="totalPrice">TZS 0</span></h5>
+                    </div>
+                    <button type="button" class="btn btn-primary w-100 mt-2" id="checkoutButton" onclick="BoothManager.showCheckoutModal()">Checkout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/boothman.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize BoothManager with the current event ID
+            BoothManager.init("{{ event.id }}");
+        });
+    </script>
+{% endblock %}
+
