@@ -1,1 +1,1 @@
-from .api import BoothViewSet, BookingViewSet 
+from .api import BoothViewSet, BookingViewSet, BookingAPIView

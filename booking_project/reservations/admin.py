@@ -50,10 +50,12 @@ from django.contrib import admin
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'booth_info', 'contact_info', 'is_confirmed', 'created_at')
+    list_display = ('id', 'booth_info', 'contact_info', 'is_confirmed', 'confirmation_date','booth__status','created_at')
     list_filter = ('created_at', 'booth__event', 'booth__status', 'is_confirmed')
     search_fields = ('booth__booth_number', 'contact__company', 'contact__email')
     raw_id_fields = ('booth', 'contact')
+    list_editable = ('is_confirmed',)
+    date_hierarchy = 'created_at'
     readonly_fields = ('created_at', 'updated_at')
 
     def booth_info(self, obj):

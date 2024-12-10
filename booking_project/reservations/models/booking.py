@@ -1,6 +1,8 @@
 from django.utils import timezone
 from django.db import models
 
+from reservations.models.choices import BoothStatus
+
 class Booking(models.Model):
     booth = models.ForeignKey('reservations.Booth', on_delete=models.CASCADE, related_name='bookings')
     contact = models.ForeignKey('reservations.Contact', on_delete=models.CASCADE, related_name='bookings')
@@ -23,6 +25,11 @@ class Booking(models.Model):
         if self.is_confirmed:
             if not self.confirmation_date:
                 self.confirmation_date = timezone.now()
+            self.booth.status = BoothStatus.RESERVED
+            self.booth.save()
+                
         else:
             self.confirmation_date = None
+            self.booth.status = BoothStatus.AVAILABLE
+            self.booth.save()
         super().save(*args, **kwargs)

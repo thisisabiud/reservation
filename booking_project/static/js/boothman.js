@@ -4,7 +4,8 @@ const BoothManager = {
         selectedBooths: new Set(),
         processingBooths: new Set(),
         booths: new Map(),
-        eventId: null
+        eventId: null,
+        selectedIds: new Set()
     },
 
     // Initialize the floor plan
@@ -13,6 +14,7 @@ const BoothManager = {
         await this.fetchBooths();
         this.renderBooths();
         this.setupEventListeners();
+        // this.showSelectedId();
     },
 
     // Fetch booths from API
@@ -93,10 +95,10 @@ const BoothManager = {
 
         if (booth.status === 'reserved' && booth.reservation_info) {
             boothContent = `
-                <span class="booth-info">${booth.booth_type}</span>
-                <span class="reserved-text">Reserved for</span>
-                <span class="company-name" title="${booth.reservation_info.company_name}">${booth.reservation_info.company_name}</span>
-                <span class="booth-price">TZS ${parseFloat(booth.price).toLocaleString()}</span>
+                <span class="booth-info">${booth.booth_type.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();})}</span>
+                <span class="reserved-text">Reserved</span>
+               
+                
             `;
 
             const tooltipContent = `
@@ -115,7 +117,7 @@ const BoothManager = {
             div.setAttribute('title', tooltipContent);
         } else {
             boothContent = `
-                <span class="booth-info">${booth.booth_type}</span>
+                <span class="booth-info">${booth.booth_type.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();})}</span>
                 ${booth.booth_number}
                 <span class="booth-price">TZS ${parseFloat(booth.price).toLocaleString()}</span>
             `;
@@ -238,6 +240,7 @@ const BoothManager = {
         boothsContainer.innerHTML = selectedBooths.map(boothId => {
             const booth = this.state.booths.get(boothId);
             // console.log(`Booth: ${booth.id}`);
+            // console.log(boothId);
             return `
                 <div class="selected-booth-item d-flex justify-content-between align-items-center p-2 border-bottom">
                     <div>
@@ -271,7 +274,32 @@ const BoothManager = {
 
         const selectedBoothsArray = Array.from(this.state.selectedBooths);
 
-        console.log(`Selected Booths: ${selectedBoothsArray}`);
+        const ids = selectedBoothsArray.map(
+            booth => {
+                const boothdata = this.state.booths.get(booth);
+                return boothdata.id;
+            }
+        );
+
+
+        // console.log(`Selected Booths list: ${ids}`);
+        // console.log(` booths: ${JSON.stringify(ids)},
+        //     event_id: ${this.state.eventId},
+        //     company: ${formData.get('company')},
+        //     contact: ${formData.get('contact')},
+        //     email: ${formData.get('email')},
+        //     phone: ${formData.get('phone')}`);
+
+        // console.group(
+        //    JSON.stringify({
+        //             booths: ids,
+        //             event_id: this.state.eventId,
+        //             company: formData.get('company'),
+        //             contact: formData.get('contact'),
+        //             email: formData.get('email'),
+        //             phone: formData.get('phone')
+        //         })
+        //     );
 
         try {
             const csrfToken = this.getCSRFToken();
@@ -283,12 +311,11 @@ const BoothManager = {
                 headers['X-CSRFToken'] = csrfToken;
             }
 
-            const response = await fetch('/api/bookings/', {
+            const response = await fetch('/api/booking/', {
                 method: 'POST',
                 headers: headers,
                 body: JSON.stringify({
-                    booths: selectedBoothsArray,
-                    event_id: this.state.eventId,
+                    booths: ids,
                     company: formData.get('company'),
                     contact: formData.get('contact'),
                     email: formData.get('email'),
@@ -296,22 +323,40 @@ const BoothManager = {
                 })
             });
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => null);
-                throw new Error(errorData?.message || 'Booking failed');
-            }
-
-            const bookingData = await response.json();
-            this.closeCheckoutModal();
-            this.showAlert('Booking successful! Your selected booths have been reserved.', 'success');
-            this.state.selectedBooths.clear();
-            await this.fetchBooths();
-            this.renderBooths();
-            this.updateSelectedBoothsList();
-        } catch (error) {
-            console.error('Booking error:', error);
-            this.showAlert('Booking failed. Please try again.', 'danger');
-        }
+            $.ajax({
+                url: '/api/booking/?event_id=' + this.state.eventId,
+                method: 'POST',
+                headers: headers,
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    booths: ids,
+                    company: formData.get('company'),
+                    contact: formData.get('contact'),
+                    email: formData.get('email'),
+                    phone: formData.get('phone')
+                }),
+                success: function(response) {
+                    console.log('Success:', response);
+                    BoothManager.closeCheckoutModal();
+                    BoothManager.showAlert(
+                      "Booking successful! Your selected booths have been reserved.",
+                      "success"
+                    );
+                    BoothManager.state.selectedBooths.clear();
+                    BoothManager.fetchBooths().then(() => {
+                        BoothManager.renderBooths();
+                        BoothManager.updateSelectedBoothsList();
+                    });
+                },
+                error: function(jqXHR, textStatus, errorThrown) 
+                { 
+                    console.error('Error:', textStatus, errorThrown); 
+                    BoothManager.showAlert('Booking failed. Please try again.', 'danger'); 
+                } }); 
+            } catch (error) { 
+                console.error('Booking error:', error); 
+                this.showAlert('Booking failed. Please try again.', 'danger');    
+          }    
     },
 
     // Update selected booths list
@@ -333,6 +378,8 @@ const BoothManager = {
             const boothData = this.state.booths.get(boothId);
             totalPrice += parseFloat(boothData.price);
 
+            
+
             html += `
                 <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                     <div>
@@ -342,12 +389,24 @@ const BoothManager = {
                     <span class="price">TZS ${parseFloat(boothData.price).toLocaleString()}</span>
                 </div>
             `;
+            // this.state.selectedIds.add(boothData.id);
         });
 
         html += '</div>';
         listElement.innerHTML = html;
         totalElement.textContent = `TZS ${totalPrice.toLocaleString()}`;
+        // this.showSelectedId();
     },
+
+    // showSelectedId(){
+    //     this.state.selectedBooths.forEach(booth => {
+    //         const boothData = this.state.booths.get(booth);
+    //         this.state.selectedIds.add(boothData.id)
+    //     });
+    //     this.state.selectedIds.forEach(id => {
+    //         console.log(`Id :` + id);
+    //     })
+    // },
 
     // Show alert messages
     showAlert(message, type) {

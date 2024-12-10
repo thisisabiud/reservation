@@ -1,15 +1,69 @@
+from logging import debug
+from reservations.models.choices import BoothStatus
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.views import APIView
 from django.db import transaction
 from django.utils import timezone
 from reservations.models import Booth, Contact, Booking
 from reservations.serializers import BoothSerializer, ContactSerializer, BookingSerializer
 
+
+class BookingAPIView(APIView):
+    def post(self, request, *args, **kwargs):
+        event_id = request.query_params.get('event_id')
+        if not event_id:
+            return Response({"error": "event_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        data = request.data
+        selected_booths = data.get('booths')
+        contact_data = {
+            'company': data.get('company'),
+            'contact': data.get('contact'),
+            'email': data.get('email'),
+            'phone': data.get('phone')
+        }
+     
+        contact_serializer = ContactSerializer(data=contact_data)
+        if not contact_serializer.is_valid():
+            return Response(contact_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            contact, created = Contact.objects.get_or_create(
+                email=contact_data['email'],
+                defaults=contact_data
+            )
+            
+            booths = Booth.objects.select_for_update().filter(
+                event_id=event_id,
+                id__in=selected_booths,
+                status=BoothStatus.AVAILABLE
+            )
+            if booths.count() != len(selected_booths):
+                return Response({"error": "One or more booths are not available"}, status=status.HTTP_400_BAD_REQUEST)
+
+            bookings = []
+            for booth in booths:
+                booth.status = BoothStatus.PROCESSING
+                booth.reserved_by = contact
+                booth.save()
+
+                booking = Booking(
+                    booth=booth,
+                    contact=contact,
+                    is_confirmed=False,
+                    confirmation_date=None
+                )
+                bookings.append(booking)
+
+            Booking.objects.bulk_create(bookings)
+        redirection_url = f"/{event_id}/floor-plan"
+        return Response({"bookings": BookingSerializer(bookings, many=True).data, "redirection_url": redirection_url}, status=status.HTTP_201_CREATED)
+
 class BoothViewSet(viewsets.ModelViewSet):
     queryset = Booth.objects.all()
     serializer_class = BoothSerializer
-
     def get_queryset(self):
         event_id = self.request.query_params.get('event_id')
         if event_id:
@@ -46,8 +100,27 @@ class BoothViewSet(viewsets.ModelViewSet):
             data.append(booth_data)
         
         return Response(data)
-
+# class BookingAPIView(APIView): 
+#     def post(self, request, *args, **kwargs): 
+#         serializer = BookingSerializer(data=request.data, context={'event_id': kwargs['event_id']}) 
+#         if serializer.is_valid(): 
+#             serializer.save() 
+#             return Response(serializer.data, status=status.HTTP_201_CREATED) 
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+# class BookingAPIView(APIView): 
+#     def post(self, request, *args, **kwargs): 
+#         event_id = request.query_params.get('event_id') 
+#         if not event_id: 
+#             return Response({"error": "event_id is required"}, status=status.HTTP_400_BAD_REQUEST) 
+#         serializer = BookingSerializer(data=request.data, context={'event_id': event_id}) 
+#         if serializer.is_valid(): 
+#             serializer.save() 
+#             return Response(serializer.data, status=status.HTTP_201_CREATED) 
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 class BookingViewSet(viewsets.ModelViewSet):
+
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
 
@@ -70,7 +143,8 @@ class BookingViewSet(viewsets.ModelViewSet):
 
         bookings = []
         for booth_id in booths:
-            booth = Booth.objects.get(id=booth_id)
+            booth = Booth.objects.get(booth_id)
+            print(booth)
             
             # Check if booth is available
             if booth.status != 'available':
@@ -83,7 +157,8 @@ class BookingViewSet(viewsets.ModelViewSet):
             booking_data = {
                 'booth': booth,
                 'contact': contact,
-                'status': 'pending'
+                'is_confirmed' : False,
+                'confirmation_date' : timezone.now()
             }
             
             booking = Booking.objects.create(**booking_data)

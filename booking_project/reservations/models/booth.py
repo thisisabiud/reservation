@@ -2,6 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from .choices import BoothStatus, BoothType
 
+
 class Booth(models.Model):
     event = models.ForeignKey('reservations.Event', on_delete=models.CASCADE, related_name='booths')
     booth_number = models.CharField(max_length=10)
