@@ -9,12 +9,25 @@ from rest_framework.response import Response
 
 from reservations.models import Event, Booth
 
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 
 def events_list(request):
-    events = Event.objects.order_by('-start_date') 
-    context = {'events': events}
+    events = Event.objects.order_by('-start_date')
+    paginator = Paginator(events, 3) 
+
+    page = request.GET.get('page')
+    try:
+        events_page = paginator.page(page)
+    except PageNotAnInteger:
+        events_page = paginator.page(1)
+    except EmptyPage:
+        events_page = paginator.page(paginator.num_pages)
+
+    context = {'events': events_page}
     return render(request, 'reservations/events_list.html', context)
+
+
 
 
 def floor_plan(request, event_id):

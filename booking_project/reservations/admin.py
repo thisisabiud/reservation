@@ -24,8 +24,8 @@ class BookingInline(admin.TabularInline):
 
 class BoothInline(admin.TabularInline):
     model = Booth
-    extra = 1
-    fields = ('booth_number', 'booth_type', 'status', 'reserved_by')
+    extra = 3
+    fields = ('booth_number', 'booth_type', 'status', 'price', 'reserved_by')
     raw_id_fields = ('reserved_by',)
     show_change_link = True
 
@@ -77,7 +77,7 @@ class EventAdmin(admin.ModelAdmin):
     
     fieldsets = (
         (None, {
-            'fields': ('title', 'description')
+            'fields': ('title', 'description', 'image')
         }),
         ('Event Details', {
             'fields': ('start_date', 'end_date', 'location', 'is_active')

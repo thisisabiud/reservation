@@ -311,17 +311,7 @@ const BoothManager = {
                 headers['X-CSRFToken'] = csrfToken;
             }
 
-            const response = await fetch('/api/booking/', {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify({
-                    booths: ids,
-                    company: formData.get('company'),
-                    contact: formData.get('contact'),
-                    email: formData.get('email'),
-                    phone: formData.get('phone')
-                })
-            });
+           
 
             $.ajax({
                 url: '/api/booking/?event_id=' + this.state.eventId,
@@ -338,10 +328,12 @@ const BoothManager = {
                 success: function(response) {
                     console.log('Success:', response);
                     BoothManager.closeCheckoutModal();
-                    BoothManager.showAlert(
-                      "Booking successful! Your selected booths have been reserved.",
-                      "success"
-                    );
+                    Swal.fire({
+                        title: 'Booking successful!',
+                        text: 'Your selected booths have been reserved.',
+                        icon: 'success',
+                        confirmButtonText: 'Close'
+                    });
                     BoothManager.state.selectedBooths.clear();
                     BoothManager.fetchBooths().then(() => {
                         BoothManager.renderBooths();
@@ -351,11 +343,21 @@ const BoothManager = {
                 error: function(jqXHR, textStatus, errorThrown) 
                 { 
                     console.error('Error:', textStatus, errorThrown); 
-                    BoothManager.showAlert('Booking failed. Please try again.', 'danger'); 
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Booking failed. Please try again',
+                        icon: 'error',
+                        confirmButtonText: 'Close'
+                    });
                 } }); 
             } catch (error) { 
                 console.error('Booking error:', error); 
-                this.showAlert('Booking failed. Please try again.', 'danger');    
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Booking failed. Please try again',
+                    icon: 'error',
+                    confirmButtonText: 'Close'
+                });
           }    
     },
 

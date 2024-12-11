@@ -1,7 +1,7 @@
 #create routes
 from django.urls import path
 from .views import web as views
-from .views.api import BookingAPIView
+from .views.api import BookingAPIView, EventSearchAPIView
 
 app_name = 'reservations'
 
@@ -21,5 +21,10 @@ urlpatterns = [
         'api/booking/',
         BookingAPIView.as_view(),
         name='booking_create'
-    )
+    ),
+    path(
+        'api/events/search/',
+        EventSearchAPIView.as_view(),
+        name='event_search'
+    ),
 ]

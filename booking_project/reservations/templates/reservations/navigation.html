@@ -1,0 +1,124 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3 mb-4">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'reservations:events_list' %}">
+            <i class="bi bi-calendar-event text-primary me-2 fs-4"></i>
+            <span class="fw-bold text-dark fs-5">Booth Reservation</span>
+        </a>
+        
+        <div class="d-flex align-items-center">
+            <form class="d-flex position-relative" id="dynamicSearchForm">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-0">
+                        <i class="bi bi-search text-muted"></i>
+                    </span>
+                    <input 
+                        type="search" 
+                        class="form-control border-0 bg-light" 
+                        id="dynamicSearch" 
+                        placeholder="Search events..." 
+                        autocomplete="off"
+                    >
+                </div>
+                
+                <div class="position-absolute top-100 start-0 w-100 shadow-sm bg-white rounded mt-1 d-none" id="searchResults" style="z-index: 1000; max-height: 300px; overflow-y: auto;">
+                    <div class="list-group list-group-flush" id="searchResultsList">
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<style>
+    .input-group {
+        border-radius: 50px;
+        overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    #dynamicSearch {
+        transition: all 0.3s ease;
+    }
+    
+    #dynamicSearch:focus {
+        box-shadow: none;
+        border-color: #007bff;
+    }
+</style>
+
+{% block extra_js%}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('dynamicSearch');
+        const searchResults = document.getElementById('searchResults');
+        const searchResultsList = document.getElementById('searchResultsList');
+    
+        function debounce(func, delay) {
+            let timeoutId;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => {
+                    func.apply(context, args);
+                }, delay);
+            };
+        }
+    
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            const date = new Date(dateString);
+            return date.toLocaleDateString(undefined, options);
+        }
+    
+        const fetchSearchResults = debounce(async (query) => {
+            if (query.length < 2) {
+                searchResults.classList.add('d-none');
+                return;
+            }
+    
+            try {
+                const response = await fetch(`/api/events/search/?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+    
+                searchResultsList.innerHTML = '';
+    
+                if (data.length === 0) {
+                    searchResultsList.innerHTML = `
+                        <div class="list-group-item text-muted">
+                            No results found
+                        </div>
+                    `;
+                } else {
+                    data.forEach(item => {
+                        const resultItem = document.createElement('a');
+                        resultItem.href = `/${item.id}/floor-plan`;
+                        resultItem.classList.add('list-group-item', 'list-group-item-action');
+                        resultItem.innerHTML = `
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">${item.title}</h6>
+                                <small class="text-muted">${formatDate(item.start_date)}</small>
+                            </div>
+                        `;
+                        searchResultsList.appendChild(resultItem);
+                    });
+                }
+    
+                searchResults.classList.remove('d-none');
+            } catch (error) {
+                console.error('Search error:', error);
+            }
+        }, 300);
+    
+        searchInput.addEventListener('input', (e) => {
+            fetchSearchResults(e.target.value);
+        });
+    
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.classList.add('d-none');
+            }
+        });
+    });
+    </script>
+{% endblock %}

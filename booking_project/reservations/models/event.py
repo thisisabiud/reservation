@@ -1,6 +1,5 @@
 from django.db import models
 from django.utils import timezone
-
 from reservations.models.choices import BoothStatus
 
 class Event(models.Model):
@@ -10,6 +9,7 @@ class Event(models.Model):
     end_date = models.DateTimeField()
     location = models.CharField(max_length=200)
     is_active = models.BooleanField(default=True)
+    image = models.ImageField(upload_to='event_images/', null=True, blank=True)  #
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

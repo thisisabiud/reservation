@@ -1,14 +1,25 @@
-from logging import debug
 from reservations.models.choices import BoothStatus
 from rest_framework import viewsets, status
+from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.views import APIView
 from django.db import transaction
 from django.utils import timezone
-from reservations.models import Booth, Contact, Booking
-from reservations.serializers import BoothSerializer, ContactSerializer, BookingSerializer
+from reservations.models import Booth, Contact, Booking, Event
+from reservations.serializers import BoothSerializer, ContactSerializer, BookingSerializer, EventSerializer
 
+
+class EventSearchAPIView(APIView):
+    def get(self, request, *args, **kwargs):
+        query = request.query_params.get('q', '')
+        events = Event.objects.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query) |
+            Q(location__icontains=query)
+        )
+        serializer = EventSerializer(events, many=True)
+        return Response(serializer.data)
 
 class BookingAPIView(APIView):
     def post(self, request, *args, **kwargs):
