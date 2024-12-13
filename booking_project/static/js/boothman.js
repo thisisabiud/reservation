@@ -19,18 +19,29 @@ const BoothManager = {
 
     // Fetch booths from API
     async fetchBooths() {
+        const loadingSwal = Swal.fire({
+            title: 'Loading booths...',
+            didOpen: () => Swal.showLoading()
+        });
+
         try {
             const response = await fetch(`/api/booths/?event_id=${this.state.eventId}`);
-            if (!response.ok) throw new Error('Failed to fetch booths');
 
             const boothsData = await response.json();
             this.state.booths.clear();
             boothsData.forEach(booth => {
                 this.state.booths.set(booth.booth_number, booth);
             });
+
+            loadingSwal.close();
         } catch (error) {
             console.error('Error fetching booths:', error);
-            this.showAlert('Failed to load booths. Please refresh the page.', 'danger');
+            loadingSwal.close();
+            Swal.fire({
+                title: 'Error',
+                text: error.message,
+                icon: 'error'
+            });
         }
     },
 
@@ -96,11 +107,9 @@ const BoothManager = {
         if (booth.status === 'reserved' && booth.reservation_info) {
             boothContent = `
                 <span class="booth-info">${booth.booth_type.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();})}</span>
-                <span class="reserved-text">Reserved</span>
-               
+                <span class="reserved-text">Reserved</span>         
                 
             `;
-
             const tooltipContent = `
                 <div class="reservation-details">
                     <strong>Booth:</strong> ${booth.booth_number}<br>
@@ -156,60 +165,67 @@ const BoothManager = {
     showCheckoutModal() {
         const modalHtml = `
             <div class="checkout-modal" id="checkoutModal">
-                <div class="checkout-container">
-                    <div class="checkout-header mb-2">
-                        <h2 class="checkout-title">Complete Your Reservation</h2>
-                        <p class="checkout-subtitle mb-0">You're just a few steps away from securing your booth space</p>
-                        <button class="checkout-close" onclick="BoothManager.closeCheckoutModal()">&times;</button>
+    <div class="checkout-container">
+        <div class="checkout-header">
+            <h2 class="checkout-title">Complete Your Reservation</h2>
+            <p class="checkout-subtitle">You're just a few steps away from securing your booth space</p>
+            <button class="checkout-close" onclick="BoothManager.closeCheckoutModal()">&times;</button>
+        </div>
+        
+        <div class="checkout-body">
+            <div class="checkout-section">
+                <h3 class="checkout-section-title">Selected Booths</h3>
+                <div class="selected-booths" id="checkoutSelectedBooths"></div>
+                
+                <div class="checkout-summary">
+                    <div class="summary-row">
+                        <span>Number of Booths:</span>
+                        <span id="summaryBoothCount">0</span>
                     </div>
-                    
-                    <div class="checkout-body">
-                        <div class="checkout-section mb-2">
-                            <h3 class="checkout-section-title mb-2">Selected Booths</h3>
-                            <div class="selected-booths mb-2" id="checkoutSelectedBooths"></div>
-                            
-                            <div class="checkout-summary p-3 bg-light rounded">
-                                <div class="summary-row d-flex justify-content-between mb-2">
-                                    <span class="fw-medium">Number of Booths:</span>
-                                    <span id="summaryBoothCount" class="fw-bold">0</span>
-                                </div>
-                                <div class="summary-row summary-total d-flex justify-content-between">
-                                    <span class="fw-medium">Total Amount:</span>
-                                    <span id="summaryTotal" class="fw-bold">TZS 0</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="checkout-section">
-                            <h3 class="checkout-section-title mb-3">Contact Information</h3>
-                            <form class="checkout-form" id="checkoutForm">
-                                <input type="hidden" name="csrfmiddlewaretoken" value="${this.getCSRFToken() || ''}">
-                                <div class="form-group full-width mb-1">
-                                    <label class="form-label">Company Name</label>
-                                    <input type="text" class="form-input" name="company" required>
-                                </div>
-                                <div class="row mb-1">
-                                    <div class="col-md-6">
-                                        <label class="form-label">Contact Person</label>
-                                        <input type="text" class="form-input" name="contact" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Phone Number</label>
-                                        <input type="tel" class="form-input" name="phone" required>
-                                    </div>
-                                </div>
-                                <div class="form-group full-width mb-1">
-                                    <label class="form-label">Email Address</label>
-                                    <input type="email" class="form-input" name="email" required>
-                                </div>
-                            </form>
-                        </div>
-                        <div class="checkout-footer mb-2 pb-2 d-flex justify-content-end gap-3">
-                            <button class="btn btn-secondary" onclick="BoothManager.closeCheckoutModal()">Cancel</button>
-                            <button class="btn btn-primary" onclick="BoothManager.processCheckout()">Complete Reservation</button>
-                        </div>
-                    </div>                 
+                    <div class="summary-row summary-total">
+                        <span>Total Amount:</span>
+                        <span id="summaryTotal">TZS 0</span>
+                    </div>
                 </div>
             </div>
+
+            <div class="checkout-section">
+                <h3 class="checkout-section-title">Contact Information</h3>
+                <form class="checkout-form" id="checkoutForm">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${this.getCSRFToken() || ''}">
+                    
+                    <div class="contact-form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Company Name</label>
+                            <input type="text" class="form-input" name="company" required>
+                        </div>
+                        
+                        <div class="contact-name-phone-row">
+                            <div class="form-group">
+                                <label class="form-label">Contact Person</label>
+                                <input type="text" class="form-input" name="contact" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-input" name="phone" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" class="form-input" name="email" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="checkout-footer">
+                <button class="btn btn-secondary" onclick="BoothManager.closeCheckoutModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="BoothManager.processCheckout()">Complete Reservation</button>
+            </div>
+        </div>                 
+    </div>
+</div>
         `;
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);

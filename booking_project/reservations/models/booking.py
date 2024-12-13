@@ -31,5 +31,6 @@ class Booking(models.Model):
         else:
             self.confirmation_date = None
             self.booth.status = BoothStatus.AVAILABLE
+            self.booth.reserved_by = None
             self.booth.save()
         super().save(*args, **kwargs)

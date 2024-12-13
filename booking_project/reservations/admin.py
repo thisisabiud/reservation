@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from reservations.models import Booking, Contact, Booth, Event
+from reservations.models.choices import BoothStatus
 
 @admin.register(Contact)
 class ContactAdmin(admin.ModelAdmin):
@@ -31,6 +32,12 @@ class BoothInline(admin.TabularInline):
 
 @admin.register(Booth)
 class BoothAdmin(admin.ModelAdmin):
+    
+    @admin.action(description='Mark selected booths as available')
+    def mark_as_available(self, request, queryset):
+        queryset.update(status=BoothStatus.AVAILABLE, reserved_by=None)
+    
+    actions = [mark_as_available]
     list_display = ('booth_number', 'event_link', 'booth_type', 'status', 'reserved_by', 'created_at')
     list_filter = ('status', 'booth_type', 'event')
     search_fields = ('booth_number', 'event__title', 'reserved_by__company')
@@ -68,6 +75,7 @@ class BookingAdmin(admin.ModelAdmin):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
+    
     list_display = ('title', 'start_date', 'end_date', 'location', 'is_active', 'total_booths', 'available_booths')
     list_filter = ('is_active', 'start_date', 'location')
     search_fields = ('title', 'description', 'location')
@@ -77,7 +85,7 @@ class EventAdmin(admin.ModelAdmin):
     
     fieldsets = (
         (None, {
-            'fields': ('title', 'description', 'image')
+            'fields': ('title', 'description', 'image', 'floor_plan')
         }),
         ('Event Details', {
             'fields': ('start_date', 'end_date', 'location', 'is_active')

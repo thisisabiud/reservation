@@ -2,18 +2,41 @@
 {% load static %}
 {% block content %}
 
-    <div class="container py-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <p class="fw-bold fs-4">{{ event.title }} - Floor Plan</p>
-            <a href="{% url 'reservations:events_list' %}" class="btn btn-outline-primary">
-                <i class="bi bi-arrow-left"></i> Back to Events
-            </a>
+    <div class="container-fluid py-4">
+        <div class="d-flex justify-content-between align-items-center p-2 mb-4">
+            <h2 class="fw-bold fs-4">{{ event.title }} - Floor Plan</h2>
+            <div class="d-flex align-items-center">
+                <button id="toggleFloorPlanBtn" class="btn btn-outline-success me-2">
+                    <i class="bi bi-eye"></i> View Floor Plan
+                </button>
+                <a href="{% url 'reservations:events_list' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-left"></i> Back to Events
+                </a>
+            </div>
         </div>
+
+        <div id="floorPlanContainer" class="row mb-4" style="display: none;">
+            <div class="col-12">
+                <div class="card border shadow-sm">
+                    <div class="card-header legend-header text-white">
+                        <h5>Event Floor Plan</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        {% if event.floor_plan %}
+                            <img src="{{ event.floor_plan.url }}" alt="Event Floor Plan" class="img-fluid" style="width: fit-content; height: 400px;">
+                        {% else %}
+                            <p class="text-muted">No floor plan image available</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col-lg-8 mb-4">
                 <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0 fw-bold">Exhibition Floor Map</h5>
+                    <div class="card-header legend-header text-white">
+                        <h5>Exhibition Floor Map</h5>
                     </div>
                     <div class="card-body">
                         <div class="floor-map">
@@ -57,13 +80,16 @@
             <!-- Side Panel -->
             <div class="col-lg-4">
                 <div class="side-panel">
-                    <h4 class="mb-4">Selected Booths</h4>
+                    <h4 class="mb-4 fw-bold">Selected Booths</h4>
                     <div id="selectedBoothsList" class="mb-4">
                         <p class="text-muted">No booths selected</p>
                     </div>
                     
                     <div class="total-section mb-4">
-                        <h5>Total Price: <span id="totalPrice">TZS 0</span></h5>
+                        <h5 class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold">Total Price:</span>
+                            <span id="totalPrice" class="badge bg-primary rounded-pill">TZS 0</span>
+                        </h5>
                     </div>
                     <button type="button" class="btn btn-primary w-100 mt-2" id="checkoutButton" onclick="BoothManager.showCheckoutModal()">Checkout</button>
                 </div>
@@ -80,6 +106,21 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             BoothManager.init("{{ event.id }}");
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggleFloorPlanBtn = document.getElementById('toggleFloorPlanBtn');
+            const floorPlanContainer = document.getElementById('floorPlanContainer');
+    
+            toggleFloorPlanBtn.addEventListener('click', function () {
+                const isFloorPlanVisible = floorPlanContainer.style.display !== 'none';
+    
+                floorPlanContainer.style.display = isFloorPlanVisible ? 'none' : 'block';
+                this.innerHTML = isFloorPlanVisible ? 
+                    '<i class="bi bi-eye"></i> View Floor Plan' : 
+                    '<i class="bi bi-eye-slash"></i> Hide Floor Plan';
+            });
         });
     </script>
 {% endblock %}

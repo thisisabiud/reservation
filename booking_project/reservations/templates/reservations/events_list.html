@@ -11,28 +11,34 @@
         transition: transform 0.2s;
         margin-bottom: 1.5rem;
     }
+
     .news-card:hover {
         transform: scale(1.02);
     }
+
     .news-image {
         width: 100%;
         height: 200px;
         object-fit: cover;
     }
+
     .news-content {
         padding: 1rem;
         text-align: center;
     }
+
     .news-title {
         font-size: 1.25rem;
         font-weight: bold;
         margin-bottom: 0.5rem;
     }
+
     .news-description {
         font-size: 1rem;
         color: #555;
         margin-bottom: 1rem;
     }
+
     .play-button {
         display: inline-block;
         padding: 0.5rem 1rem;
@@ -43,15 +49,20 @@
         border-radius: 5px;
         text-decoration: none;
     }
+
     .play-button:hover {
         background-color: #0056b3;
     }
+
     .navbar-custom {
         background-color: #0056b3;
     }
-    .navbar-custom .navbar-brand, .navbar-custom .nav-link {
+
+    .navbar-custom .navbar-brand,
+    .navbar-custom .nav-link {
         color: #fff;
     }
+
     .navbar-custom .nav-link:hover {
         color: #ddd;
     }
@@ -68,20 +79,22 @@
             <p class="text-muted">Discover our curated collection of exhibitions</p>
         </div>
     </div>
-    
+
     <div class="row g-3 row-cols-1 row-cols-md-2 row-cols-lg-3">
         {% for event in events %}
         <div class="col">
-            <div class="news-card">
-                {% if event.image %}
-                <img src="{{ event.image.url }}" class="news-image" alt="{{ event.title }}">
-                {% endif %}
-                <div class="news-content">
-                    <div class="news-title">{{ event.title }}</div>
-                    <div class="news-description">{{ event.description|truncatewords:10 }}</div>
-                    <a href="{% url 'reservations:floor_plan' event.id %}" class="play-button">View Floor Plan</a>
+            <a href="{% url 'reservations:floor_plan' event.id %}" style="text-decoration: none;">
+                <div class="news-card">
+                    {% if event.image %}
+                    <img src="{{ event.image.url }}" class="news-image" alt="{{ event.title }}">
+                    {% endif %}
+                    <div class="news-content">
+                        <div class="news-title">{{ event.title }}</div>
+                        <div class="news-description">{{ event.description|truncatewords:10 }}</div>
+                        <a href="{% url 'reservations:floor_plan' event.id %}" class="play-button">View Floor Plan</a>
+                    </div>
                 </div>
-            </div>
+            </a>
         </div>
         {% empty %}
         <div class="col-12">
@@ -89,7 +102,7 @@
         </div>
         {% endfor %}
     </div>
-    
+
     {% include 'reservations/pagination.html' with page_obj=events %}
 </div>
 {% endblock %}
