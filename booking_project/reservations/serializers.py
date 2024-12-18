@@ -27,25 +27,17 @@ class ContactSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 class BoothSerializer(serializers.ModelSerializer):
-    reservation_info = serializers.SerializerMethodField()
+    # reservation_info = serializers.SerializerMethodField()
     
     class Meta:
         model = Booth
         fields = [
             'id', 'booth_number', 'booth_type', 'status',
-            'price', 'reserved_by', 'reservation_info'
+            'price'
         ]
-        read_only_fields = ['id', 'reserved_by', 'reservation_info']
+        read_only_fields = ['id']
     
-    def get_reservation_info(self, obj):
-        if obj.status == BoothStatus.RESERVED and obj.reserved_by:
-            return {
-                'company_name': obj.reserved_by.company,
-                'contact_person': obj.reserved_by.contact,
-                'email': obj.reserved_by.email,
-                'phone': obj.reserved_by.phone
-            }
-        return None
+   
 
 class BookingSerializer(serializers.ModelSerializer):
     contact = ContactSerializer()

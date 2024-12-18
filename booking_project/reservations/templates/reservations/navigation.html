@@ -1,124 +1,161 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3 mb-4">
-    <div class="container-fluid px-4">
-        <a class="navbar-brand d-flex align-items-center" href="{% url 'reservations:events_list' %}">
-            <i class="bi bi-calendar-event text-primary me-2 fs-4"></i>
-            <span class="fw-bold text-dark fs-5">Booth Reservation</span>
-        </a>
-        
-        <div class="d-flex align-items-center">
-            <form class="d-flex position-relative" id="dynamicSearchForm">
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-0">
-                        <i class="bi bi-search text-muted"></i>
-                    </span>
-                    <input 
-                        type="search" 
-                        class="form-control border-0 bg-light" 
-                        id="dynamicSearch" 
-                        placeholder="Search events..." 
-                        autocomplete="off"
-                    >
+<nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-md">
+    <div class="container mx-auto px-4 py-3">
+        <div class="flex items-center justify-between">
+            <!-- Brand Section -->
+            <a href="{% url 'reservations:events_list' %}" class="flex items-center group">
+                <div class="p-2 rounded-full bg-blue-50 group-hover:bg-blue-100 transition-colors duration-300 mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 group-hover:text-blue-700 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
                 </div>
-                
-                <div class="position-absolute top-100 start-0 w-100 shadow-sm bg-white rounded mt-1 d-none" id="searchResults" style="z-index: 1000; max-height: 300px; overflow-y: auto;">
-                    <div class="list-group list-group-flush" id="searchResultsList">
+                <span class="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
+                    Booth Reservation
+                </span>
+            </a>
+
+            <!-- Search Section -->
+            <div class="flex-grow max-w-xl mx-6">
+                <form class="relative" id="dynamicSearchForm">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
                     </div>
-                </div>
-            </form>
+                    <input 
+                        type="search"
+                        id="dynamicSearch"
+                        placeholder="Search events..."
+                        autocomplete="off"
+                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 ease-in-out"
+                    >
+                    
+                    <!-- Search Results Dropdown -->
+                    <div 
+                        id="searchResults"
+                        class="absolute z-50 w-full mt-2 bg-white rounded-lg shadow-lg border border-gray-100 hidden max-h-96 overflow-y-auto"
+                    >
+                        <div 
+                            id="searchResultsList" 
+                            class="divide-y divide-gray-100"
+                        >
+                            <!-- Dynamically populated search results -->
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </nav>
 
-<style>
-    .input-group {
-        border-radius: 50px;
-        overflow: hidden;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    
-    #dynamicSearch {
-        transition: all 0.3s ease;
-    }
-    
-    #dynamicSearch:focus {
-        box-shadow: none;
-        border-color: #007bff;
-    }
-</style>
 
 {% block extra_js%}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const searchInput = document.getElementById('dynamicSearch');
-        const searchResults = document.getElementById('searchResults');
-        const searchResultsList = document.getElementById('searchResultsList');
-    
-        function debounce(func, delay) {
-            let timeoutId;
-            return function() {
-                const context = this;
-                const args = arguments;
-                clearTimeout(timeoutId);
-                timeoutId = setTimeout(() => {
-                    func.apply(context, args);
-                }, delay);
-            };
+    const searchInput = document.getElementById('dynamicSearch');
+    const searchResults = document.getElementById('searchResults');
+    const searchResultsList = document.getElementById('searchResultsList');
+
+    // Debounce function
+    function debounce(func, delay) {
+        let timeoutId;
+        return function() {
+            const context = this;
+            const args = arguments;
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                func.apply(context, args);
+            }, delay);
+        };
+    }
+
+    // Date formatting function
+    function formatDate(dateString) {
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        const date = new Date(dateString);
+        return date.toLocaleDateString(undefined, options);
+    }
+
+    // Fetch search results
+    const fetchSearchResults = debounce(async function(query) {
+        console.log('Searching for:', query);
+
+        // Hide results if query is too short
+        if (query.length < 2) {
+            searchResults.classList.add('hidden');
+            return;
         }
-    
-        function formatDate(dateString) {
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            const date = new Date(dateString);
-            return date.toLocaleDateString(undefined, options);
-        }
-    
-        const fetchSearchResults = debounce(async (query) => {
-            if (query.length < 2) {
-                searchResults.classList.add('d-none');
-                return;
+
+        try {
+            const response = await fetch(`/api/events/search/?q=${encodeURIComponent(query)}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-    
-            try {
-                const response = await fetch(`/api/events/search/?q=${encodeURIComponent(query)}`);
-                const data = await response.json();
-    
-                searchResultsList.innerHTML = '';
-    
-                if (data.length === 0) {
-                    searchResultsList.innerHTML = `
-                        <div class="list-group-item text-muted">
-                            No results found
+
+            const data = await response.json();
+            console.log('Search response:', data);
+
+            // Clear previous results
+            searchResultsList.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                searchResultsList.innerHTML = `
+                    <div class="px-4 py-2 text-gray-500 hover:bg-gray-100">
+                        No results found
+                    </div>
+                `;
+                searchResults.classList.remove('hidden');
+            } else {
+                data.forEach(item => {
+                    const resultItem = document.createElement('a');
+                    resultItem.href = `/${item.id}/floor-plan`;
+                    resultItem.className = 'block px-4 py-2 hover:bg-gray-100 transition-colors duration-200 ease-in-out';
+                    resultItem.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <h6 class="text-gray-800 font-semibold">${item.title}</h6>
+                            <small class="text-gray-500 text-sm">${formatDate(item.start_date)}</small>
                         </div>
                     `;
-                } else {
-                    data.forEach(item => {
-                        const resultItem = document.createElement('a');
-                        resultItem.href = `/${item.id}/floor-plan`;
-                        resultItem.classList.add('list-group-item', 'list-group-item-action');
-                        resultItem.innerHTML = `
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">${item.title}</h6>
-                                <small class="text-muted">${formatDate(item.start_date)}</small>
-                            </div>
-                        `;
-                        searchResultsList.appendChild(resultItem);
-                    });
-                }
-    
-                searchResults.classList.remove('d-none');
-            } catch (error) {
-                console.error('Search error:', error);
+                    searchResultsList.appendChild(resultItem);
+                });
+
+                // Show results
+                searchResults.classList.remove('hidden');
             }
-        }, 300);
-    
-        searchInput.addEventListener('input', (e) => {
-            fetchSearchResults(e.target.value);
-        });
-    
-        document.addEventListener('click', (e) => {
-            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                searchResults.classList.add('d-none');
-            }
-        });
+
+        } catch (error) {
+            console.error('Search error:', error);
+            searchResultsList.innerHTML = `
+                <div class="px-4 py-2 text-red-500 hover:bg-gray-100">
+                    An error occurred while searching: ${error.message}
+                </div>
+            `;
+            searchResults.classList.remove('hidden');
+        }
+    }, 300);
+
+    // Event listener for search input
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        if (query.length >= 2) {
+            fetchSearchResults(query);
+        } else {
+            searchResults.classList.add('hidden');
+        }
     });
-    </script>
+
+    // Close search results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!document.getElementById('dynamicSearchForm').contains(e.target)) {
+            searchResults.classList.add('hidden');
+        }
+    });
+});
+</script>
 {% endblock %}

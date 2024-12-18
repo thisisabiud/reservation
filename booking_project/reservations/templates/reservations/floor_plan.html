@@ -1,127 +1,152 @@
 {% extends 'reservations/base.html' %}
 {% load static %}
-{% block content %}
 
-    <div class="container-fluid py-4">
-        <div class="d-flex justify-content-between align-items-center p-2 mb-4">
-            <h2 class="fw-bold fs-4">{{ event.title }} - Floor Plan</h2>
-            <div class="d-flex align-items-center">
-                <button id="toggleFloorPlanBtn" class="btn btn-outline-success me-2">
-                    <i class="bi bi-eye"></i> View Floor Plan
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="container mx-auto px-4 py-6 space-y-6">
+        <!-- Header Section -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-2">
+            <h1 class="font-bold text-2xl sm:text-3xl text-gray-900">{{ event.title }} - Floor Plan</h1>
+            <div class="flex flex-wrap gap-3">
+                <button id="toggleFloorPlanBtn" class="inline-flex items-center px-4 sm:px-6 py-2.5 bg-indigo-100 text-indigo-700 rounded-lg font-medium text-sm uppercase tracking-wide 
+                    hover:bg-indigo-200 active:bg-indigo-300 transition-all duration-200 
+                    focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    <i class="bi bi-eye mr-2"></i> View Floor Plan
                 </button>
-                <a href="{% url 'reservations:events_list' %}" class="btn btn-outline-primary">
-                    <i class="bi bi-arrow-left"></i> Back to Events
+                <a href="{% url 'reservations:events_list' %}" class="inline-flex items-center px-4 sm:px-6 py-2.5 bg-teal-100 text-teal-700 rounded-lg font-medium text-sm uppercase tracking-wide 
+                    hover:bg-teal-200 active:bg-teal-300 transition-all duration-200
+                    focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2">
+                    <i class="bi bi-arrow-left mr-2"></i> Back to Events
                 </a>
             </div>
         </div>
 
-        <div id="floorPlanContainer" class="row mb-4" style="display: none;">
-            <div class="col-12">
-                <div class="card border shadow-sm">
-                    <div class="card-header legend-header text-white">
-                        <h5>Event Floor Plan</h5>
-                    </div>
-                    <div class="card-body text-center">
-                        {% if event.floor_plan %}
-                            <img src="{{ event.floor_plan.url }}" alt="Event Floor Plan" class="img-fluid" style="width: fit-content; height: 400px;">
-                        {% else %}
-                            <p class="text-muted">No floor plan image available</p>
-                        {% endif %}
-                    </div>
+        <!-- Floor Plan Section -->
+        <div id="floorPlanContainer" class="hidden transition-all duration-300 ease-in-out">
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-4">
+                    <h2 class="text-lg font-semibold">Event Floor Plan</h2>
+                </div>
+                <div class="p-4">
+                    {% if event.floor_plan %}
+                        <div class="relative aspect-video max-h-[600px] overflow-hidden rounded-lg">
+                            <img src="{{ event.floor_plan.url }}" alt="Event Floor Plan" 
+                                class="object-contain w-full h-full">
+                        </div>
+                    {% else %}
+                        <div class="flex items-center justify-center h-48 bg-gray-50 rounded-lg">
+                            <p class="text-gray-500 flex items-center">
+                                <i class="bi bi-image-alt mr-2"></i> No floor plan available
+                            </p>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-lg-8 mb-4">
-                <div class="card">
-                    <div class="card-header legend-header text-white">
-                        <h5>Exhibition Floor Map</h5>
+        <!-- Main Content Grid -->
+        <div class="grid lg:grid-cols-12 gap-6">
+            <!-- Left Column -->
+            <div class="lg:col-span-8 space-y-6">
+                <!-- Exhibition Map -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-4">
+                        <h2 class="text-lg font-semibold">Exhibition Floor Map</h2>
                     </div>
-                    <div class="card-body">
-                        <div class="floor-map">
-                            <div class="floor-container">
-
-                                <div class="aisle"></div>
-
-                               
-                            </div>
+                    <div class="p-4">
+                        <div class="floor-container min-h-[400px]">
+                            <div class="aisle"></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="legend-wrapper">
-                    <div class="legend-header">
-                        <h5>Key</h5>
+                <!-- Legend -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="bg-gray-50 p-4 border-b">
+                        <h2 class="text-lg font-semibold text-gray-900">Key</h2>
                     </div>
-                    <div class="legend-body">
-                        <div class="legend-container">
-                            <div class="legend-item">
-                                <div class="legend-color available"></div>
-                                <span class="legend-text">Available</span>
+                    <div class="p-4">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="border-2 border-black rounded-md w-6 h-6 bg-white"></div>
+                                <span class="text-sm font-medium">Available</span>
                             </div>
-                            <div class="legend-item">
-                                <div class="legend-color reserved"></div>
-                                <span class="legend-text">Reserved</span>
+                            <div class="flex items-center space-x-3">
+                                <div class="rounded-md w-6 h-6 bg-gray-200"></div>
+                                <span class="text-sm font-medium">Reserved</span>
                             </div>
-                            <div class="legend-item">
-                                <div class="legend-color processing"></div>
-                                <span class="legend-text">Processing</span>
+                            <div class="flex items-center space-x-3">
+                                <div class="rounded-md w-6 h-6 bg-yellow-200"></div>
+                                <span class="text-sm font-medium">Processing</span>
                             </div>
-                            <div class="legend-item">
-                                <div class="legend-color selected"></div>
-                                <span class="legend-text">Selected</span>
+                            <div class="flex items-center space-x-3">
+                                <div class="rounded-md w-6 h-6 bg-blue-200"></div>
+                                <span class="text-sm font-medium">Selected</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Side Panel -->
-            <div class="col-lg-4">
-                <div class="side-panel">
-                    <h4 class="mb-4 fw-bold">Selected Booths</h4>
-                    <div id="selectedBoothsList" class="mb-4">
-                        <p class="text-muted">No booths selected</p>
+            <!-- Right Column -->
+            <div class="lg:col-span-4">
+                <div class="bg-white rounded-xl shadow-sm p-6 sticky top-4">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Selected Booths</h2>
+                    <div id="selectedBoothsList" class="mb-6 min-h-[100px]">
+                        <p class="text-gray-500 italic">No booths selected</p>
                     </div>
                     
-                    <div class="total-section mb-4">
-                        <h5 class="d-flex justify-content-between align-items-center">
-                            <span class="fw-bold">Total Price:</span>
-                            <span id="totalPrice" class="badge bg-primary rounded-pill">TZS 0</span>
-                        </h5>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                            <span class="font-semibold text-gray-900">Total Price:</span>
+                            <span id="totalPrice" class="bg-blue-600 text-white px-4 py-1.5 rounded-full font-medium">
+                                TZS 0
+                            </span>
+                        </div>
+                        <button type="button" 
+                            class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium
+                            hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200
+                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                            disabled:opacity-50 disabled:cursor-not-allowed"
+                            id="checkoutButton"
+                            onclick="BoothManager.showCheckoutModal()">
+                            Proceed to Checkout
+                        </button>
                     </div>
-                    <button type="button" class="btn btn-primary w-100 mt-2" id="checkoutButton" onclick="BoothManager.showCheckoutModal()">Checkout</button>
                 </div>
             </div>
         </div>
     </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="{% static 'js/boothman.js' %}"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            BoothManager.init("{{ event.id }}");
-        });
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const toggleFloorPlanBtn = document.getElementById('toggleFloorPlanBtn');
-            const floorPlanContainer = document.getElementById('floorPlanContainer');
-    
-            toggleFloorPlanBtn.addEventListener('click', function () {
-                const isFloorPlanVisible = floorPlanContainer.style.display !== 'none';
-    
-                floorPlanContainer.style.display = isFloorPlanVisible ? 'none' : 'block';
-                this.innerHTML = isFloorPlanVisible ? 
-                    '<i class="bi bi-eye"></i> View Floor Plan' : 
-                    '<i class="bi bi-eye-slash"></i> Hide Floor Plan';
-            });
-        });
-    </script>
-{% endblock %}
 
+<script src="{% static 'js/boothman.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize BoothManager
+        BoothManager.init("{{ event.id }}");
+
+        // Floor Plan Toggle with smooth transition
+        const toggleFloorPlanBtn = document.getElementById('toggleFloorPlanBtn');
+        const floorPlanContainer = document.getElementById('floorPlanContainer');
+        
+        toggleFloorPlanBtn.addEventListener('click', function() {
+            floorPlanContainer.classList.toggle('hidden');
+            
+            // Update button text and icon
+            const isHidden = floorPlanContainer.classList.contains('hidden');
+            const icon = isHidden ? 'eye' : 'eye-slash';
+            const text = isHidden ? 'View' : 'Hide';
+            
+            this.innerHTML = `<i class="bi bi-${icon} mr-2"></i> ${text} Floor Plan`;
+
+            // Smooth scroll to floor plan when showing
+            if (!isHidden) {
+                floorPlanContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    });
+</script>
+{% endblock %}

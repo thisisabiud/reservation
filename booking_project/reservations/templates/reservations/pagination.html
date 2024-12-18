@@ -1,57 +1,76 @@
 {% if page_obj.has_other_pages %}
-<nav aria-label="Page navigation" class="d-flex justify-content-center mt-4">
-    <ul class="pagination shadow-sm">
-        {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="?page=1" aria-label="First">
-                    <span aria-hidden="true">&laquo;&laquo;</span>
-                </a>
-            </li>
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
-                    <span aria-hidden="true">&laquo;</span>
-                </a>
-            </li>
-        {% else %}
-            <li class="page-item disabled">
-                <span class="page-link">&laquo;&laquo;</span>
-            </li>
-            <li class="page-item disabled">
-                <span class="page-link">&laquo;</span>
-            </li>
-        {% endif %}
+<nav aria-label="Pagination" class="flex justify-center items-center space-x-2 mt-12">
+    {% if page_obj.has_previous %}
+        {# First Page Button #}
+        <a 
+            href="?page=1" 
+            class="p-2.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-300 
+                   focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            aria-label="First Page"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414zm-6 0a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+            </svg>
+        </a>
 
-        {% for num in page_obj.paginator.page_range %}
-            {% if page_obj.number == num %}
-                <li class="page-item active" aria-current="page">
-                    <span class="page-link">{{ num }}</span>
-                </li>
-            {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"+3" %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                </li>
-            {% endif %}
-        {% endfor %}
+        {# Previous Page Button #}
+        <a 
+            href="?page={{ page_obj.previous_page_number }}" 
+            class="p-2.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-300 
+                   focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            aria-label="Previous Page"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+        </a>
+    {% endif %}
 
-        {% if page_obj.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
-                    <span aria-hidden="true">&raquo;</span>
-                </a>
-            </li>
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
-                    <span aria-hidden="true">&raquo;&raquo;</span>
-                </a>
-            </li>
-        {% else %}
-            <li class="page-item disabled">
-                <span class="page-link">&raquo;</span>
-            </li>
-            <li class="page-item disabled">
-                <span class="page-link">&raquo;&raquo;</span>
-            </li>
+    {# Page Number Buttons #}
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+            <span 
+                class="px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold shadow-md"
+                aria-current="page"
+            >
+                {{ num }}
+            </span>
+        {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"+3" %}
+            <a 
+                href="?page={{ num }}" 
+                class="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 
+                       hover:bg-gray-100 hover:text-gray-900 transition-all duration-300 
+                       focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+                {{ num }}
+            </a>
         {% endif %}
-    </ul>
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+        {# Next Page Button #}
+        <a 
+            href="?page={{ page_obj.next_page_number }}" 
+            class="p-2.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-300 
+                   focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            aria-label="Next Page"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+        </a>
+
+        {# Last Page Button #}
+        <a 
+            href="?page={{ page_obj.paginator.num_pages }}" 
+            class="p-2.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-300 
+                   focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            aria-label="Last Page"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0zm-6 0a1 1 0 010-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+        </a>
+    {% endif %}
 </nav>
 {% endif %}

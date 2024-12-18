@@ -1,462 +1,442 @@
 const BoothManager = {
-    // State management
-    state: {
-        selectedBooths: new Set(),
-        processingBooths: new Set(),
-        booths: new Map(),
-        eventId: null,
-        selectedIds: new Set()
-    },
+  // State management
+  state: {
+    selectedBooths: new Set(),
+    processingBooths: new Set(),
+    booths: new Map(),
+    eventId: null,
+    selectedIds: new Set(),
+  },
 
-    // Initialize the floor plan
-    async init(eventId) {
-        this.state.eventId = eventId;
-        await this.fetchBooths();
-        this.renderBooths();
-        this.setupEventListeners();
-        // this.showSelectedId();
-    },
+  // Initialize the floor plan
+  async init(eventId) {
+    this.state.eventId = eventId;
+    await this.fetchBooths();
+    this.renderBooths();
+    this.setupEventListeners();
+  },
 
-    // Fetch booths from API
-    async fetchBooths() {
-        const loadingSwal = Swal.fire({
-            title: 'Loading booths...',
-            didOpen: () => Swal.showLoading()
+  // Fetch booths from API
+  async fetchBooths() {
+    Swal.fire({
+      title: "Loading booths...",
+      didOpen: () => Swal.showLoading(),
+    });
+
+    try {
+      const response = await fetch(
+        `/api/booths/?event_id=${this.state.eventId}`
+      );
+      const boothsData = await response.json();
+      this.state.booths.clear();
+      boothsData.forEach((booth) => {
+        this.state.booths.set(booth.booth_number, booth);
+      });
+
+      Swal.close();
+    } catch (error) {
+      console.error("Error fetching booths:", error);
+      Swal.close();
+      Swal.fire({
+        title: "Error",
+        text: error.message,
+        icon: "error",
+      });
+    }
+  },
+
+  // Render booths on the floor plan
+  renderBooths() {
+    const $floorContainer = $(".floor-container");
+    if (!$floorContainer.length) return;
+
+    // Clear existing booths
+    $floorContainer.empty();
+
+    // Group booths by row (A, B, etc.)
+    const boothsByRow = new Map();
+    this.state.booths.forEach((booth) => {
+      const row = booth.booth_number.charAt(0);
+      if (!boothsByRow.has(row)) {
+        boothsByRow.set(row, []);
+      }
+      boothsByRow.get(row).push(booth);
+    });
+
+    // Render each row
+    boothsByRow.forEach((booths, row) => {
+      const $rowDiv = $("<div>", {
+        class: "flex flex-wrap justify-center",
+      });
+
+      booths
+        .sort((a, b) => {
+          return (
+            parseInt(a.booth_number.slice(1)) -
+            parseInt(b.booth_number.slice(1))
+          );
+        })
+        .forEach((booth) => {
+          $rowDiv.append(this.createBoothElement(booth));
         });
 
-        try {
-            const response = await fetch(`/api/booths/?event_id=${this.state.eventId}`);
-
-            const boothsData = await response.json();
-            this.state.booths.clear();
-            boothsData.forEach(booth => {
-                this.state.booths.set(booth.booth_number, booth);
-            });
-
-            loadingSwal.close();
-        } catch (error) {
-            console.error('Error fetching booths:', error);
-            loadingSwal.close();
-            Swal.fire({
-                title: 'Error',
-                text: error.message,
-                icon: 'error'
-            });
-        }
-    },
-
-    // Render booths on the floor plan
-    renderBooths() {
-        const floorContainer = document.querySelector('.floor-container');
-        if (!floorContainer) return;
-
-        // Clear existing booths
-        const existingBooths = floorContainer.querySelectorAll('.booth');
-        existingBooths.forEach(booth => booth.remove());
-
-        // Group booths by row (A, B, etc.)
-        const boothsByRow = new Map();
-        this.state.booths.forEach(booth => {
-            const row = booth.booth_number.charAt(0);
-            if (!boothsByRow.has(row)) {
-                boothsByRow.set(row, []);
-            }
-            boothsByRow.get(row).push(booth);
+      // Add aisle after each row except the last
+      if (row !== Array.from(boothsByRow.keys()).pop()) {
+        const $aisle = $("<div>", {
+          class: "w-full h-4 bg-gray-200 my-2",
         });
+        $floorContainer.append($rowDiv);
+        $floorContainer.append($aisle);
+      } else {
+        $floorContainer.append($rowDiv);
+      }
+    });
 
-        // Render each row
-        boothsByRow.forEach((booths, row) => {
-            const rowDiv = document.createElement('div');
-            rowDiv.className = 'd-flex flex-wrap justify-content-center';
+    // Enable tooltips
+    // $('[data-bs-toggle="tooltip"]').tooltip();
+  },
 
-            booths.sort((a, b) => {
-                return parseInt(a.booth_number.slice(1)) - parseInt(b.booth_number.slice(1));
-            }).forEach(booth => {
-                rowDiv.appendChild(this.createBoothElement(booth));
-            });
+  // Create a single booth element
+  createBoothElement(booth) {
+    $("#checkoutButton").prop("disabled", !this.state.selectedBooths.size);
 
-            // Add aisle after each row except the last
-            if (row !== Array.from(boothsByRow.keys()).pop()) {
-                const aisle = document.createElement('div');
-                aisle.className = 'aisle';
-                floorContainer.appendChild(rowDiv);
-                floorContainer.appendChild(aisle);
-            } else {
-                floorContainer.appendChild(rowDiv);
-            }
-        });
+    const $div = $("<div>", {
+      class: `booth w-[120px] h-[120px] m-[10px] inline-flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ease-in-out rounded-[12px] relative font-semibold text-[1.2em] shadow-md transform perspective-[1000px] rotate-x-[5deg] p-[10px] text-center backdrop-blur-[5px] ${
+        booth.status
+      } relative border-2 p-2 m-1 cursor-pointer 
+                    ${
+                      booth.status === "available"
+                        ? "bg-white hover:bg-blue-100"
+                        : booth.status === "reserved"
+                        ? "bg-gray-200 opacity-50"
+                        : booth.status === "processing"
+                        ? "bg-yellow-200"
+                        : ""
+                    }`,
+      "data-booth": booth.booth_number,
+      "data-price": booth.price,
+      "data-id": booth.id,
+    });
 
-        // Initialize tooltips
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    },
+    let boothContent = "";
 
-    // Create a single booth element
-    createBoothElement(booth) {
-        $('#checkoutButton').prop('disabled', !this.state.selectedBooths.size);
-        const div = document.createElement('div');
-        div.className = `booth ${booth.status}`;
-        div.dataset.booth = booth.booth_number;
-        div.dataset.price = booth.price;
-        div.dataset.id = booth.id;
-
-        let boothContent = '';
-
-        if (booth.status === 'reserved' && booth.reservation_info) {
-            boothContent = `
-                <span class="booth-info">${booth.booth_type.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();})}</span>
-                <span class="reserved-text">Reserved</span>         
-                
+    if (booth.status === "reserved") {
+      boothContent = `
+                <span class="block text-xs text-gray-500">${this.formatBoothType(
+                  booth.booth_type
+                )}</span>
+                <span class="text-red-500 font-bold">Reserved</span>
             `;
-            const tooltipContent = `
-                <div class="reservation-details">
-                    <strong>Booth:</strong> ${booth.booth_number}<br>
-                    <strong>Company:</strong> ${booth.reservation_info.company_name}<br>
-                    <strong>Contact:</strong> ${booth.reservation_info.contact_person}<br>
-                    ${booth.reservation_info.email ? `<strong>Email:</strong> ${booth.reservation_info.email}<br>` : ''}
-                    ${booth.reservation_info.phone ? `<strong>Phone:</strong> ${booth.reservation_info.phone}` : ''}
-                </div>
+
+      // const tooltipContent = `
+      //     <div class="text-sm">
+      //         <strong>Booth:</strong> ${booth.booth_number}<br>
+      //         <strong>Company:</strong> ${booth.reservation_info.company_name}<br>
+      //         <strong>Contact:</strong> ${booth.reservation_info.contact_person}<br>
+      //         ${booth.reservation_info.email ? `<strong>Email:</strong> ${booth.reservation_info.email}<br>` : ''}
+      //         ${booth.reservation_info.phone ? `<strong>Phone:</strong> ${booth.reservation_info.phone}` : ''}
+      //     </div>
+      // `;
+
+      // $div.attr({
+      //     'data-bs-toggle': 'tooltip',
+      //     'data-bs-html': 'true',
+      //     'data-bs-placement': 'top',
+      //     'title': tooltipContent
+      // });
+    } else {
+      boothContent = `
+                <span class="block text-xs text-gray-600">${this.formatBoothType(
+                  booth.booth_type
+                )}</span>
+                <span class="font-bold">${booth.booth_number}</span>
+                <span class="text-sm text-blue-600">TZS ${parseFloat(
+                  booth.price
+                ).toLocaleString()}</span>
             `;
+    }
 
-            div.setAttribute('data-bs-toggle', 'tooltip');
-            div.setAttribute('data-bs-html', 'true');
-            div.setAttribute('data-bs-placement', 'top');
-            div.setAttribute('title', tooltipContent);
-        } else {
-            boothContent = `
-                <span class="booth-info">${booth.booth_type.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();})}</span>
-                ${booth.booth_number}
-                <span class="booth-price">TZS ${parseFloat(booth.price).toLocaleString()}</span>
-            `;
-        }
+    $div.html(boothContent);
+    return $div;
+  },
 
-        div.innerHTML = boothContent;
-        return div;
-    },
+  // Format booth type with proper capitalization
+  formatBoothType(type) {
+    return type.replace(/\w\S*/g, function (txt) {
+      return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    });
+  },
 
-    // Set up event listeners
-    setupEventListeners() {
-        document.querySelector('.floor-container').addEventListener('click', (e) => {
-            const boothElement = e.target.closest('.booth');
-            if (!boothElement) return;
+  // Set up event listeners
+  setupEventListeners() {
+    $(".floor-container").on("click", ".booth", (e) => {
+      const $boothElement = $(e.currentTarget);
+      const boothId = $boothElement.data("booth");
+      const boothData = this.state.booths.get(boothId);
 
-            const boothId = boothElement.dataset.booth;
-            const boothData = this.state.booths.get(boothId);
+      if (
+        boothData.status === "reserved" ||
+        boothData.status === "processing"
+      ) {
+        return;
+      }
 
-            if (boothData.status === 'reserved' || boothData.status === 'processing') {
-                return;
-            }
+      $boothElement.toggleClass("selected bg-blue-200");
 
-            if (boothElement.classList.contains('selected')) {
-                boothElement.classList.remove('selected');
-                this.state.selectedBooths.delete(boothId);
-            } else {
-                boothElement.classList.add('selected');
-                this.state.selectedBooths.add(boothId);
-            }
+      if ($boothElement.hasClass("selected")) {
+        this.state.selectedBooths.add(boothId);
+      } else {
+        this.state.selectedBooths.delete(boothId);
+      }
 
-            this.updateSelectedBoothsList();
-        });
-    },
+      this.updateSelectedBoothsList();
+    });
+  },
 
-    // Show checkout modal
-    showCheckoutModal() {
-        const modalHtml = `
-            <div class="checkout-modal" id="checkoutModal">
-    <div class="checkout-container">
-        <div class="checkout-header">
-            <h2 class="checkout-title">Complete Your Reservation</h2>
-            <p class="checkout-subtitle">You're just a few steps away from securing your booth space</p>
-            <button class="checkout-close" onclick="BoothManager.closeCheckoutModal()">&times;</button>
-        </div>
-        
-        <div class="checkout-body">
-            <div class="checkout-section">
-                <h3 class="checkout-section-title">Selected Booths</h3>
-                <div class="selected-booths" id="checkoutSelectedBooths"></div>
-                
-                <div class="checkout-summary">
-                    <div class="summary-row">
-                        <span>Number of Booths:</span>
-                        <span id="summaryBoothCount">0</span>
+  // Show checkout modal
+  showCheckoutModal() {
+    const modalHtml = `
+            <div id="checkoutModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+                <div class="bg-white rounded-lg shadow-xl w-11/12 max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Complete Your Reservation</h2>
+                        <button id="closeCheckoutModal" class="text-gray-600 hover:text-gray-900">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
                     </div>
-                    <div class="summary-row summary-total">
-                        <span>Total Amount:</span>
-                        <span id="summaryTotal">TZS 0</span>
-                    </div>
-                </div>
-            </div>
 
-            <div class="checkout-section">
-                <h3 class="checkout-section-title">Contact Information</h3>
-                <form class="checkout-form" id="checkoutForm">
-                    <input type="hidden" name="csrfmiddlewaretoken" value="${this.getCSRFToken() || ''}">
-                    
-                    <div class="contact-form-grid">
-                        <div class="form-group">
-                            <label class="form-label">Company Name</label>
-                            <input type="text" class="form-input" name="company" required>
-                        </div>
-                        
-                        <div class="contact-name-phone-row">
-                            <div class="form-group">
-                                <label class="form-label">Contact Person</label>
-                                <input type="text" class="form-input" name="contact" required>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">Selected Booths</h3>
+                            <div id="checkoutSelectedBooths" class="space-y-2">
+                                <!-- Dynamically populated booths -->
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Phone Number</label>
-                                <input type="tel" class="form-input" name="phone" required>
+                            <div class="mt-4 bg-gray-100 p-3 rounded">
+                                <div class="flex justify-between">
+                                    <span>Number of Booths:</span>
+                                    <span id="summaryBoothCount" class="font-bold">0</span>
+                                </div>
+                                <div class="flex justify-between mt-2">
+                                    <span class="font-semibold">Total Amount:</span>
+                                    <span id="summaryTotal" class="text-blue-600 font-bold">TZS 0</span>
+                                </div>
                             </div>
                         </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Email Address</label>
-                            <input type="email" class="form-input" name="email" required>
+
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">Contact Information</h3>
+                            <form id="checkoutForm" class="space-y-4">
+                                <input type="hidden" name="csrfmiddlewaretoken" value="${
+                                  this.getCSRFToken() || ""
+                                }">
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                                    <input type="text" name="company" required 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
+                                        <input type="text" name="contact" required 
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                        <input type="tel" name="phone" required 
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                    <input type="email" name="email" required 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                            </form>
                         </div>
                     </div>
-                </form>
-            </div>
 
-            <div class="checkout-footer">
-                <button class="btn btn-secondary" onclick="BoothManager.closeCheckoutModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="BoothManager.processCheckout()">Complete Reservation</button>
+                    <div class="mt-6 flex justify-end space-x-4">
+                        <button id="cancelCheckout" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition">
+                            Cancel
+                        </button>
+                        <button id="completeReservation" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
+                            Complete Reservation
+                        </button>
+                    </div>
+                </div>
             </div>
-        </div>                 
-    </div>
-</div>
         `;
 
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        requestAnimationFrame(() => {
-            const modal = document.getElementById('checkoutModal');
-            modal.classList.add('active');
-            this.updateCheckoutSummary();
-        });
-    },
+    $("body").append(modalHtml);
 
-    // Close checkout modal
-    closeCheckoutModal() {
-        const modal = document.getElementById('checkoutModal');
-        modal.classList.remove('active');
-        setTimeout(() => modal.remove(), 300);
-    },
+    // Setup modal event listeners
+    $("#closeCheckoutModal, #cancelCheckout").on("click", () =>
+      this.closeCheckoutModal()
+    );
+    $("#completeReservation").on("click", () => this.processCheckout());
 
-    // Update checkout summary
-    updateCheckoutSummary() {
-        const selectedBooths = Array.from(this.state.selectedBooths);
-        const boothsContainer = document.getElementById('checkoutSelectedBooths');
-        const summaryBoothCount = document.getElementById('summaryBoothCount');
-        const summaryTotal = document.getElementById('summaryTotal');
+    this.updateCheckoutSummary();
+  },
 
-        // console.log(`Selected Booths: ${selectedBooths}`);
+  // Close checkout modal
+  closeCheckoutModal() {
+    $("#checkoutModal").remove();
+  },
 
-        // Update selected booths display
-        boothsContainer.innerHTML = selectedBooths.map(boothId => {
-            const booth = this.state.booths.get(boothId);
-            // console.log(`Booth: ${booth.id}`);
-            // console.log(boothId);
-            return `
-                <div class="selected-booth-item d-flex justify-content-between align-items-center p-2 border-bottom">
+  // Update checkout summary
+  updateCheckoutSummary() {
+    const selectedBooths = Array.from(this.state.selectedBooths);
+    const $boothsContainer = $("#checkoutSelectedBooths");
+    const $summaryBoothCount = $("#summaryBoothCount");
+    const $summaryTotal = $("#summaryTotal");
+
+    // Update selected booths display
+    $boothsContainer.html(
+      selectedBooths
+        .map((boothId) => {
+          const booth = this.state.booths.get(boothId);
+          return `
+                <div class="flex justify-between items-center bg-gray-100 p-2 rounded">
                     <div>
-                        <span class="booth-number fw-bold">Booth ${booth.booth_number}</span>
-                        <span class="booth-type text-muted ms-2">${booth.booth_type}</span>
+                        <span class="font-bold">Booth ${
+                          booth.booth_number
+                        }</span>
+                        <span class="text-sm text-gray-600 ml-2">${this.formatBoothType(
+                          booth.booth_type
+                        )}</span>
                     </div>
-                    <span class="booth-price">TZS ${parseFloat(booth.price).toLocaleString()}</span>
+                    <span class="text-blue-600">TZS ${parseFloat(
+                      booth.price
+                    ).toLocaleString()}</span>
                 </div>
             `;
-        }).join('');
+        })
+        .join("")
+    );
 
-        // Update summary
-        let totalPrice = 0;
-        selectedBooths.forEach(boothId => {
-            totalPrice += parseFloat(this.state.booths.get(boothId).price);
+    // Calculate total price
+    const totalPrice = selectedBooths.reduce((total, boothId) => {
+      return total + parseFloat(this.state.booths.get(boothId).price);
+    }, 0);
+
+    $summaryBoothCount.text(selectedBooths.length);
+    $summaryTotal.text(`TZS ${totalPrice.toLocaleString()}`);
+  },
+
+  // Process checkout
+  async processCheckout() {
+    const $form = $("#checkoutForm");
+
+    // Validate form
+    if (!$form[0].checkValidity()) {
+      $form[0].reportValidity();
+      return;
+    }
+
+    const selectedBoothsArray = Array.from(this.state.selectedBooths);
+    const ids = selectedBoothsArray.map((booth) => {
+      const boothData = this.state.booths.get(booth);
+      return boothData.id;
+    });
+
+    const formData = $form.serializeArray();
+    const payload = {
+      booths: ids,
+      event_id: this.state.eventId,
+      company: formData.find((f) => f.name === "company").value,
+      contact: formData.find((f) => f.name === "contact").value,
+      email: formData.find((f) => f.name === "email").value,
+      phone: formData.find((f) => f.name === "phone").value,
+    };
+
+    try {
+      const response = await $.ajax({
+        url: `/api/booking/?event_id=${this.state.eventId}`,
+        method: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(payload),
+        headers: {
+          "X-CSRFToken": this.getCSRFToken(),
+        },
+      });
+
+      Swal.fire({
+        title: "Booking Successful!",
+        text: "Your selected booths have been reserved.",
+        icon: "success",
+        confirmButtonText: "Close",
+      }).then(() => {
+        this.state.selectedBooths.clear();
+        this.closeCheckoutModal();
+
+        // Refresh booths
+        this.fetchBooths().then(() => {
+          this.renderBooths();
+          this.updateSelectedBoothsList();
         });
+      });
+    } catch (error) {
+      console.error("Booking error:", error);
+      Swal.fire({
+        title: "Error",
+        text: "Booking failed. Please try again.",
+        icon: "error",
+        confirmButtonText: "Close",
+      });
+    }
+  },
 
-        summaryBoothCount.textContent = selectedBooths.length;
-        summaryTotal.textContent = `TZS ${totalPrice.toLocaleString()}`;
-    },
+  updateSelectedBoothsList() {
+    $("#checkoutButton").prop("disabled", !this.state.selectedBooths.size);
+    const $listElement = $("#selectedBoothsList");
+    const $totalElement = $("#totalPrice");
 
-    // Process checkout
-    async processCheckout() {
-        const form = document.getElementById('checkoutForm');
-        if (!form.checkValidity()) {
-            form.reportValidity();
-            return;
-        }
+    if (this.state.selectedBooths.size === 0) {
+      $listElement.html('<p class="text-gray-500">No booths selected</p>');
+      $totalElement.text("TZS 0");
+      return;
+    }
 
-        const formData = new FormData(form);
+    let html = '<div class="space-y-2">';
+    let totalPrice = 0;
 
-        const selectedBoothsArray = Array.from(this.state.selectedBooths);
+    this.state.selectedBooths.forEach((boothId) => {
+      const boothData = this.state.booths.get(boothId);
+      totalPrice += parseFloat(boothData.price);
 
-        const ids = selectedBoothsArray.map(
-            booth => {
-                const boothdata = this.state.booths.get(booth);
-                return boothdata.id;
-            }
-        );
-
-
-        // console.log(`Selected Booths list: ${ids}`);
-        // console.log(` booths: ${JSON.stringify(ids)},
-        //     event_id: ${this.state.eventId},
-        //     company: ${formData.get('company')},
-        //     contact: ${formData.get('contact')},
-        //     email: ${formData.get('email')},
-        //     phone: ${formData.get('phone')}`);
-
-        // console.group(
-        //    JSON.stringify({
-        //             booths: ids,
-        //             event_id: this.state.eventId,
-        //             company: formData.get('company'),
-        //             contact: formData.get('contact'),
-        //             email: formData.get('email'),
-        //             phone: formData.get('phone')
-        //         })
-        //     );
-
-        try {
-            const csrfToken = this.getCSRFToken();
-            const headers = {
-                'Content-Type': 'application/json'
-            };
-
-            if (csrfToken) {
-                headers['X-CSRFToken'] = csrfToken;
-            }
-
-           
-
-            $.ajax({
-                url: '/api/booking/?event_id=' + this.state.eventId,
-                method: 'POST',
-                headers: headers,
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    booths: ids,
-                    company: formData.get('company'),
-                    contact: formData.get('contact'),
-                    email: formData.get('email'),
-                    phone: formData.get('phone')
-                }),
-                success: function(response) {
-                    console.log('Success:', response);
-                    BoothManager.closeCheckoutModal();
-                    Swal.fire({
-                        title: 'Booking successful!',
-                        text: 'Your selected booths have been reserved.',
-                        icon: 'success',
-                        confirmButtonText: 'Close'
-                    });
-                    BoothManager.state.selectedBooths.clear();
-                    BoothManager.fetchBooths().then(() => {
-                        BoothManager.renderBooths();
-                        BoothManager.updateSelectedBoothsList();
-                    });
-                },
-                error: function(jqXHR, textStatus, errorThrown) 
-                { 
-                    console.error('Error:', textStatus, errorThrown); 
-                    Swal.fire({
-                        title: 'Error',
-                        text: 'Booking failed. Please try again',
-                        icon: 'error',
-                        confirmButtonText: 'Close'
-                    });
-                } }); 
-            } catch (error) { 
-                console.error('Booking error:', error); 
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Booking failed. Please try again',
-                    icon: 'error',
-                    confirmButtonText: 'Close'
-                });
-          }    
-    },
-
-    // Update selected booths list
-    updateSelectedBoothsList() {
-        $('#checkoutButton').prop('disabled', !this.state.selectedBooths.size);
-        const listElement = document.getElementById('selectedBoothsList');
-        const totalElement = document.getElementById('totalPrice');
-
-        if (this.state.selectedBooths.size === 0) {
-            listElement.innerHTML = '<p class="text-muted">No booths selected</p>';
-            totalElement.textContent = 'TZS 0';
-            return;
-        }
-
-        let html = '<div class="list-group">';
-        let totalPrice = 0;
-
-        this.state.selectedBooths.forEach(boothId => {
-            const boothData = this.state.booths.get(boothId);
-            totalPrice += parseFloat(boothData.price);
-
-            
-
-            html += `
-                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+      html += `
+                <div class="flex justify-between items-center bg-gray-100 p-2 rounded">
                     <div>
-                        <strong>Booth ${boothId}</strong>
-                        <small class="d-block text-muted">${boothData.booth_type}</small>
+                        <strong class="text-gray-800">Booth ${boothId}</strong>
+                        <small class="block text-gray-500">${this.formatBoothType(
+                          boothData.booth_type
+                        )}</small>
                     </div>
-                    <span class="price">TZS ${parseFloat(boothData.price).toLocaleString()}</span>
+                    <span class="text-blue-600 font-bold">TZS ${parseFloat(
+                      boothData.price
+                    ).toLocaleString()}</span>
                 </div>
             `;
-            // this.state.selectedIds.add(boothData.id);
-        });
+    });
 
-        html += '</div>';
-        listElement.innerHTML = html;
-        totalElement.textContent = `TZS ${totalPrice.toLocaleString()}`;
-        // this.showSelectedId();
-    },
+    html += "</div>";
+    $listElement.html(html);
+    $totalElement.text(`TZS ${totalPrice.toLocaleString()}`);
+  },
 
-    // showSelectedId(){
-    //     this.state.selectedBooths.forEach(booth => {
-    //         const boothData = this.state.booths.get(booth);
-    //         this.state.selectedIds.add(boothData.id)
-    //     });
-    //     this.state.selectedIds.forEach(id => {
-    //         console.log(`Id :` + id);
-    //     })
-    // },
-
-    // Show alert messages
-    showAlert(message, type) {
-        const alert = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        `;
-        document.querySelector('.side-panel').insertAdjacentHTML('afterbegin', alert);
-    },
-
-    // Get CSRF token with improved error handling
-    getCSRFToken() {
-        // First try to get from hidden input
-        const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
-        if (csrfInput) {
-            return csrfInput.value;
-        }
-
-        // Then try to get from cookie
-        const cookieValue = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('csrftoken='))
-            ?.split('=')[1];
-
-        if (cookieValue) {
-            return cookieValue;
-        }
-
-        // If no CSRF token found, log a warning
-        console.warn('No CSRF token found. Make sure you have included {% csrf_token %} in your template.');
-        return null;
-    },
+  // Utility method to get CSRF token
+  getCSRFToken() {
+    return (
+      $("input[name=csrfmiddlewaretoken]").val() ||
+      document.cookie.replace(
+        /(?:(?:^|.*;\s*)csrftoken\s*\=\s*([^;]*).*$)|^.*$/,
+        "$1"
+      )
+    );
+  },
 };
