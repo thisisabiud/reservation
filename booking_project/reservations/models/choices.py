@@ -9,5 +9,4 @@ class BoothStatus(models.TextChoices):
 class BoothType(models.TextChoices):
     """Type of booth in the event"""
     PREMIUM = 'premium', 'Premium'
-    CORNER = 'corner', 'Corner'
     STANDARD = 'standard', 'Standard'

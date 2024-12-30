@@ -1,10 +1,4 @@
 {% extends 'reservations/base.html' %}
-<!-- {% load static %} -->
-
-{% block extra_css %}
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-
-{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-2 py-12">
@@ -13,7 +7,7 @@
             <h2 class="text-4xl font-extrabold text-gray-900 mb-4">
                 Upcoming Exhibition Events
             </h2>
-            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p class="text-md text-gray-600 max-w-3xl mx-auto">
                 Explore our carefully curated collection of exhibitions across various themes and artistic expressions.
             </p>
         </div>
@@ -39,7 +33,7 @@
                         </h3>
                     </div>
                     
-                    <p class="text-gray-600 mb-6 line-clamp-3">
+                    <p class="text-gray-600 text-sm mb-6 line-clamp-3">
                         {{ event.description|truncatewords:15 }}
                     </p>
                     
@@ -64,6 +58,11 @@
                                 />
                             </svg>
                         </a>
+                        <a 
+                            href="{% url 'reservations:event_details' event.id %}" 
+                            class="inline-flex items-center px-6 py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold text-sm uppercase tracking-wider 
+                                   hover:bg-gray-300 transition-colors duration-300 
+                                   focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">View Details</a>
                     </div>
                 </div>
             </div>

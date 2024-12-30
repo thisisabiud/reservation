@@ -13,6 +13,11 @@ urlpatterns = [
         name='events_list'
     ),
     path(
+        '<int:event_id>/', 
+        views.event_details, 
+        name='event_details'
+    ),
+    path(
         '<int:event_id>/floor-plan/', 
         views.floor_plan, 
         name='floor_plan'

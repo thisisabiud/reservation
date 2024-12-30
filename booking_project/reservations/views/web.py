@@ -27,7 +27,12 @@ def events_list(request):
     context = {'events': events_page}
     return render(request, 'reservations/events_list.html', context)
 
-
+#create event detail view
+def event_details(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    return render(request, 'reservations/event_details.html', {
+        'event': event
+    })
 
 
 def floor_plan(request, event_id):
@@ -37,7 +42,6 @@ def floor_plan(request, event_id):
         'event': event,
         'booths': booths
     })
-    # return render(request, 'reservations/floor.html',)
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods

@@ -46,3 +46,22 @@ class Contact(models.Model):
         return self.bookings.filter(
             booth__event__end_date__gte=timezone.now()
         )
+    
+
+class Exhibitor(models.Model):
+    company = models.ForeignKey("Contact", on_delete=models.CASCADE, related_name='exhibitors')
+    event = models.ForeignKey('reservations.Event', on_delete=models.CASCADE, related_name='exhibitors')
+    name = models.CharField(max_length=200)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.company.company})"
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Exhibitor'
+        verbose_name_plural = 'Exhibitors'
+        unique_together = [['event', 'company', 'name']]
+        indexes = [
+            models.Index(fields=['event', 'company']),
+        ]

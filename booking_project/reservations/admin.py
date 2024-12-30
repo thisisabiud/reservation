@@ -4,6 +4,7 @@ from django.utils.html import format_html
 from django.urls import reverse
 from reservations.models import Booking, Contact, Booth, Event
 from reservations.models.choices import BoothStatus
+from reservations.models.contact import Exhibitor
 
 @admin.register(Contact)
 class ContactAdmin(admin.ModelAdmin):
@@ -26,8 +27,8 @@ class BookingInline(admin.TabularInline):
 class BoothInline(admin.TabularInline):
     model = Booth
     extra = 3
-    fields = ('booth_number', 'booth_type', 'status', 'price', 'reserved_by')
-    raw_id_fields = ('reserved_by',)
+    fields = ('booth_number', 'booth_type', 'status', 'price')
+    #raw_id_fields = ('reserved_by',)
     show_change_link = True
 
 @admin.register(Booth)
@@ -35,23 +36,19 @@ class BoothAdmin(admin.ModelAdmin):
     
     @admin.action(description='Mark selected booths as available')
     def mark_as_available(self, request, queryset):
-        queryset.update(status=BoothStatus.AVAILABLE, reserved_by=None)
+        queryset.update(status=BoothStatus.AVAILABLE)
     
     actions = [mark_as_available]
-    list_display = ('booth_number', 'event_link', 'booth_type', 'status', 'reserved_by', 'created_at')
+    list_display = ('booth_number', 'booth_type', 'status', 'created_at')
     list_filter = ('status', 'booth_type', 'event')
-    search_fields = ('booth_number', 'event__title', 'reserved_by__company')
-    raw_id_fields = ('reserved_by',)
+    search_fields = ('booth_number', 'event__title')
     readonly_fields = ('created_at', 'updated_at')
-    list_select_related = ('event', 'reserved_by')
+    list_select_related = ('event',)
     
-    def event_link(self, obj):
-        url = reverse('admin:reservations_event_change', args=[obj.event.id])
-        return format_html('<a href="{}">{}</a>', url, obj.event.title)
-    event_link.short_description = 'Event'
-    
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related('event', 'reserved_by')
+    # def event_link(self, obj):
+    #     url = reverse('admin:reservations_event_change', args=[obj.event.id])
+    #     return format_html('<a href="{}">{}</a>', url, obj.event.title)
+    # event_link.short_description = 'Event'
 
 from django.contrib import admin
 
@@ -107,15 +104,12 @@ class EventAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).prefetch_related('booths')
 
-# Optional: Custom admin site configuration
-class ReservationsAdminSite(admin.AdminSite):
-    site_header = 'Event Reservations Administration'
-    site_title = 'Event Reservations Admin'
-    index_title = 'Event Reservations Management'
+@admin.register(Exhibitor)
+class ExhibitorAdmin(admin.ModelAdmin):
+    list_display = ('name', 'company', 'event', 'created_at')
+    list_filter = ('event', 'created_at')
+    search_fields = ('name', 'company__company')
+    readonly_fields = ('created_at', 'updated_at')
+    date_hierarchy = 'created_at'
 
-# Optional: Register with custom admin site
-# admin_site = ReservationsAdminSite(name='reservations_admin')
-# admin_site.register(Event, EventAdmin)
-# admin_site.register(Booth, BoothAdmin)
-# admin_site.register(Contact, ContactAdmin)
-# admin_site.register(Booking, BookingAdmin)
+

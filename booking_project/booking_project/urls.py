@@ -25,7 +25,7 @@ from reservations import views
 
 router = DefaultRouter()
 router.register(r'booths', views.BoothViewSet)
-router.register(r'bookings', views.BookingViewSet)
+# router.register(r'bookings', views.BookingViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

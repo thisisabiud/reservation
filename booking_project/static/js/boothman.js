@@ -196,80 +196,153 @@ const BoothManager = {
   // Show checkout modal
   showCheckoutModal() {
     const modalHtml = `
-            <div id="checkoutModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-                <div class="bg-white rounded-lg shadow-xl w-11/12 max-w-2xl max-h-[90vh] overflow-y-auto p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-2xl font-bold text-gray-800">Complete Your Reservation</h2>
-                        <button id="closeCheckoutModal" class="text-gray-600 hover:text-gray-900">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+            <div id="checkoutModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-2xl w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
+        <!-- Sticky Header -->
+        <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center z-10">
+            <h2 class="text-2xl font-bold text-gray-800">Complete Your Reservation</h2>
+            <button id="closeCheckoutModal" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="p-6">
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Selected Booths Section -->
+                <div>
+                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                             </svg>
-                        </button>
-                    </div>
-
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <div>
-                            <h3 class="text-lg font-semibold mb-4">Selected Booths</h3>
-                            <div id="checkoutSelectedBooths" class="space-y-2">
-                                <!-- Dynamically populated booths -->
-                            </div>
-                            <div class="mt-4 bg-gray-100 p-3 rounded">
-                                <div class="flex justify-between">
-                                    <span>Number of Booths:</span>
-                                    <span id="summaryBoothCount" class="font-bold">0</span>
-                                </div>
-                                <div class="flex justify-between mt-2">
-                                    <span class="font-semibold">Total Amount:</span>
-                                    <span id="summaryTotal" class="text-blue-600 font-bold">TZS 0</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <h3 class="text-lg font-semibold mb-4">Contact Information</h3>
-                            <form id="checkoutForm" class="space-y-4">
-                                <input type="hidden" name="csrfmiddlewaretoken" value="${
-                                  this.getCSRFToken() || ""
-                                }">
-                                
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-                                    <input type="text" name="company" required 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                </div>
-
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
-                                        <input type="text" name="contact" required 
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                                        <input type="tel" name="phone" required 
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                                    <input type="email" name="email" required 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                </div>
-                            </form>
+                            Selected Booths
+                        </h3>
+                        <div id="checkoutSelectedBooths" class="space-y-3">
+                            <!-- Dynamically populated booths -->
                         </div>
                     </div>
 
-                    <div class="mt-6 flex justify-end space-x-4">
-                        <button id="cancelCheckout" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition">
-                            Cancel
-                        </button>
-                        <button id="completeReservation" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
-                            Complete Reservation
-                        </button>
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-gray-700">Number of Booths:</span>
+                            <span id="summaryBoothCount" class="font-semibold">0</span>
+                        </div>
+                        <div class="flex justify-between items-center pt-2 border-t border-blue-100">
+                            <span class="font-semibold text-gray-900">Total Amount:</span>
+                            <span id="summaryTotal" class="text-lg font-bold text-blue-600">TZS 0</span>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Contact Information Form -->
+                <div>
+                    <form id="checkoutForm" class="space-y-6">
+                       <input type="hidden" name="csrfmiddlewaretoken" value="${
+                         this.getCSRFToken() || ""
+                       }">
+                        
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-semibold flex items-center gap-2">
+                                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                </svg>
+                                Contact Information
+                            </h3>
+
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                                <input type="text" name="company" required 
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="form-group">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
+                                    <input type="text" name="contact" required 
+                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div class="form-group">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                    <input type="tel" name="phone" required 
+                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                <input type="email" name="email" required 
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+
+                            <!-- Exhibitors Section -->
+                            <div class="mt-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-3">Exhibitors</label>
+                                <div id="exhibitorsContainer" class="space-y-3">
+                                    <div class="exhibitor-field flex items-center gap-2 group">
+                                        <input type="text" 
+                                            name="exhibitors[]" 
+                                            placeholder="Exhibitor name"
+                                            required 
+                                            class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200">
+                                        <button type="button" 
+                                            class="remove-exhibitor p-2 text-gray-400 hover:text-red-500 rounded-lg opacity-50 group-hover:opacity-100 transition-all duration-200"
+                                            style="display: none;">
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <button type="button" 
+                                    id="addExhibitor"
+                                    class="mt-4 px-5 py-2.5 text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg 
+                                    hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800
+                                    transition-all duration-300 ease-in-out transform hover:scale-[1.02] 
+                                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                                    shadow-sm hover:shadow-md
+                                    flex items-center justify-center gap-3">
+                                    <svg class="w-4 h-4 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                    </svg>
+                                    <span>Add Exhibitor</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
+
+            <!-- Footer Buttons -->
+            <div class="mt-8 flex justify-end gap-4">
+                <button id="cancelCheckout" 
+                    class="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+                    Cancel
+                </button>
+                <button id="completeReservation" 
+                    class="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg
+                    hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800
+                    transition-all duration-300 ease-in-out transform hover:scale-[1.02] 
+                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                    shadow-sm hover:shadow-md
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    flex items-center justify-center gap-2">
+                    <span>Complete Reservation</span>
+                    <svg class="w-5 h-5 animate-spin hidden" id="submitSpinner" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" 
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
         `;
 
     $("body").append(modalHtml);
@@ -281,6 +354,30 @@ const BoothManager = {
     $("#completeReservation").on("click", () => this.processCheckout());
 
     this.updateCheckoutSummary();
+    // Exhibitor field handling
+    $("#addExhibitor").on("click", function () {
+      const newField = $("#exhibitorsContainer .exhibitor-field")
+        .first()
+        .clone();
+      newField.find("input").val("");
+      newField.find(".remove-exhibitor").css("display", "flex");
+
+      // Add fade-in animation
+      newField.hide();
+      $("#exhibitorsContainer").append(newField);
+      newField.fadeIn(300);
+    });
+
+    $("#exhibitorsContainer").on("click", ".remove-exhibitor", function () {
+      if ($(".exhibitor-field").length > 1) {
+        $(this)
+          .closest(".exhibitor-field")
+          .addClass("scale-95 opacity-0")
+          .fadeOut(200, function () {
+            $(this).remove();
+          });
+      }
+    });
   },
 
   // Close checkout modal
@@ -352,9 +449,22 @@ const BoothManager = {
       contact: formData.find((f) => f.name === "contact").value,
       email: formData.find((f) => f.name === "email").value,
       phone: formData.find((f) => f.name === "phone").value,
+      exhibitors: formData
+        .filter((f) => f.name === "exhibitors[]")
+        .map((f) => f.value),
     };
 
     try {
+      // Show loading state
+      Swal.fire({
+        title: "Processing Reservation",
+        html: "Please wait while we process your booking...",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
       const response = await $.ajax({
         url: `/api/booking/?event_id=${this.state.eventId}`,
         method: "POST",
@@ -365,28 +475,53 @@ const BoothManager = {
         },
       });
 
-      Swal.fire({
-        title: "Booking Successful!",
-        text: "Your selected booths have been reserved.",
-        icon: "success",
+      // Close loading and show success with animation
+      Swal.close();
+      await Swal.fire({
+        title: "Reservation Complete!",
+        html: `
+              <div class="mb-4">
+                  <svg class="mx-auto w-16 h-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+              </div>
+              <p class="text-gray-600">Your booth reservation was successful!</p>
+          `,
+        icon: null,
+        showConfirmButton: true,
         confirmButtonText: "Close",
-      }).then(() => {
-        this.state.selectedBooths.clear();
-        this.closeCheckoutModal();
-
-        // Refresh booths
-        this.fetchBooths().then(() => {
-          this.renderBooths();
-          this.updateSelectedBoothsList();
-        });
+        confirmButtonColor: "#3B82F6",
+        allowOutsideClick: false,
+        customClass: {
+          popup: "animated fadeInUp faster",
+        },
       });
+
+      this.state.selectedBooths.clear();
+      this.closeCheckoutModal();
+
+      // Refresh booths with loading indicator
+      await this.fetchBooths();
+      this.renderBooths();
+      this.updateSelectedBoothsList();
     } catch (error) {
       console.error("Booking error:", error);
       Swal.fire({
-        title: "Error",
-        text: "Booking failed. Please try again.",
-        icon: "error",
-        confirmButtonText: "Close",
+        title: "Reservation Failed",
+        html: `
+              <div class="mb-4">
+                  <svg class="mx-auto w-16 h-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+              </div>
+              <p class="text-gray-600">There was an error processing your reservation. Please try again.</p>
+          `,
+        icon: null,
+        confirmButtonText: "Try Again",
+        confirmButtonColor: "#3B82F6",
+        customClass: {
+          popup: "animated fadeInUp faster",
+        },
       });
     }
   },

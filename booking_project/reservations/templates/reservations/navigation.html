@@ -1,4 +1,4 @@
-<nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-md">
+<nav class="sticky top-0 z-[60] bg-white/90 backdrop-blur-md shadow-md">
     <div class="container mx-auto px-4 py-3">
         <div class="flex items-center justify-between">
             <!-- Brand Section -->
@@ -14,7 +14,7 @@
             </a>
 
             <!-- Search Section -->
-            <div class="flex-grow max-w-xl mx-6">
+            <div class="flex-grow max-w-xl mx-6 relative">
                 <form class="relative" id="dynamicSearchForm">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
@@ -32,7 +32,8 @@
                     <!-- Search Results Dropdown -->
                     <div 
                         id="searchResults"
-                        class="absolute z-50 w-full mt-2 bg-white rounded-lg shadow-lg border border-gray-100 hidden max-h-96 overflow-y-auto"
+                        class="absolute z-[70] w-full mt-2 bg-white rounded-lg shadow-xl border border-gray-100 hidden max-h-96 overflow-y-auto"
+                        style="transform: translate3d(0, 0, 0);"
                     >
                         <div 
                             id="searchResultsList" 
@@ -47,114 +48,117 @@
     </div>
 </nav>
 
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
-{% block extra_js%}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('dynamicSearch');
-    const searchResults = document.getElementById('searchResults');
-    const searchResultsList = document.getElementById('searchResultsList');
+$(document).ready(function() {
+    const $searchInput = $('#dynamicSearch');
+    const $searchResults = $('#searchResults');
+    const $searchResultsList = $('#searchResultsList');
+    let isSearchFocused = false;
 
     // Debounce function
-    function debounce(func, delay) {
-        let timeoutId;
+    function debounce(func, wait) {
+        let timeout;
         return function() {
             const context = this;
             const args = arguments;
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => {
+            clearTimeout(timeout);
+            timeout = setTimeout(function() {
                 func.apply(context, args);
-            }, delay);
+            }, wait);
         };
     }
 
-    // Date formatting function
+    // Format date helper
     function formatDate(dateString) {
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        const date = new Date(dateString);
-        return date.toLocaleDateString(undefined, options);
+        return new Date(dateString).toLocaleDateString(undefined, options);
     }
 
     // Fetch search results
-    const fetchSearchResults = debounce(async function(query) {
-        console.log('Searching for:', query);
-
-        // Hide results if query is too short
+    const fetchSearchResults = debounce(function(query) {
         if (query.length < 2) {
-            searchResults.classList.add('hidden');
+            $searchResults.fadeOut(200);
             return;
         }
 
-        try {
-            const response = await fetch(`/api/events/search/?q=${encodeURIComponent(query)}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
+        $.ajax({
+            url: `/api/events/search/?q=${encodeURIComponent(query)}`,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function(data) {
+                $searchResultsList.empty();
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('Search response:', data);
-
-            // Clear previous results
-            searchResultsList.innerHTML = '';
-
-            if (!data || data.length === 0) {
-                searchResultsList.innerHTML = `
-                    <div class="px-4 py-2 text-gray-500 hover:bg-gray-100">
-                        No results found
-                    </div>
-                `;
-                searchResults.classList.remove('hidden');
-            } else {
-                data.forEach(item => {
-                    const resultItem = document.createElement('a');
-                    resultItem.href = `/${item.id}/floor-plan`;
-                    resultItem.className = 'block px-4 py-2 hover:bg-gray-100 transition-colors duration-200 ease-in-out';
-                    resultItem.innerHTML = `
-                        <div class="flex justify-between items-center">
-                            <h6 class="text-gray-800 font-semibold">${item.title}</h6>
-                            <small class="text-gray-500 text-sm">${formatDate(item.start_date)}</small>
+                if (!data || !data.length) {
+                    $searchResultsList.append(`
+                        <div class="px-4 py-3 text-gray-500">
+                            No results found
                         </div>
-                    `;
-                    searchResultsList.appendChild(resultItem);
-                });
+                    `);
+                } else {
+                    $.each(data, function(i, item) {
+                        $searchResultsList.append(`
+                            <a href="/${item.id}/floor-plan" 
+                               class="block px-4 py-3 hover:bg-blue-50 transition-colors duration-200">
+                                <div class="flex justify-between items-center">
+                                    <h6 class="text-gray-800 font-semibold">${item.title}</h6>
+                                    <small class="text-gray-500 text-sm ml-4">${formatDate(item.start_date)}</small>
+                                </div>
+                            </a>
+                        `);
+                    });
+                }
 
-                // Show results
-                searchResults.classList.remove('hidden');
+                if (isSearchFocused) {
+                    $searchResults.fadeIn(200);
+                }
+            },
+            error: function(xhr, status, error) {
+                $searchResultsList.empty().append(`
+                    <div class="px-4 py-3 text-red-500">
+                        An error occurred while searching
+                    </div>
+                `);
+                if (isSearchFocused) {
+                    $searchResults.fadeIn(200);
+                }
             }
-
-        } catch (error) {
-            console.error('Search error:', error);
-            searchResultsList.innerHTML = `
-                <div class="px-4 py-2 text-red-500 hover:bg-gray-100">
-                    An error occurred while searching: ${error.message}
-                </div>
-            `;
-            searchResults.classList.remove('hidden');
-        }
+        });
     }, 300);
 
-    // Event listener for search input
-    searchInput.addEventListener('input', function() {
-        const query = this.value.trim();
-        if (query.length >= 2) {
-            fetchSearchResults(query);
-        } else {
-            searchResults.classList.add('hidden');
+    // Event handlers
+    $searchInput
+        .on('input', function() {
+            const query = $(this).val().trim();
+            if (query.length >= 2) {
+                fetchSearchResults(query);
+            } else {
+                $searchResults.fadeOut(200);
+            }
+        })
+        .on('focus', function() {
+            isSearchFocused = true;
+            if ($(this).val().trim().length >= 2) {
+                $searchResults.fadeIn(200);
+            }
+        });
+
+    // Close search results when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#dynamicSearchForm').length) {
+            isSearchFocused = false;
+            $searchResults.fadeOut(200);
         }
     });
 
-    // Close search results when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!document.getElementById('dynamicSearchForm').contains(e.target)) {
-            searchResults.classList.add('hidden');
-        }
+    // Prevent form submission
+    $('#dynamicSearchForm').on('submit', function(e) {
+        e.preventDefault();
     });
 });
 </script>
