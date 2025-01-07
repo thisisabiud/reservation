@@ -4,6 +4,8 @@ const BoothManager = {
     selectedBooths: new Set(),
     processingBooths: new Set(),
     booths: new Map(),
+    standardBooths: new Map(),
+    premiumBooths: new Map(),
     eventId: null,
     selectedIds: new Set(),
   },
@@ -14,6 +16,17 @@ const BoothManager = {
     await this.fetchBooths();
     this.renderBooths();
     this.setupEventListeners();
+  },
+
+  // Categorize booths into standard and premium
+  categorizeBooths() {
+    this.state.booths.forEach(booth => {
+      if (booth.booth_type === 'standard') {
+        this.state.standardBooths.set(booth.booth_number, booth);
+      } else if (booth.booth_type === 'premium') {
+        this.state.premiumBooths.set(booth.booth_number, booth);
+      }
+    });
   },
 
   // Fetch booths from API
@@ -28,10 +41,20 @@ const BoothManager = {
         `/api/booths/?event_id=${this.state.eventId}`
       );
       const boothsData = await response.json();
+    
+      
+      // Clear all collections
       this.state.booths.clear();
+      this.state.standardBooths.clear();
+      this.state.premiumBooths.clear();
+
+      // Store and categorize booths
       boothsData.forEach((booth) => {
         this.state.booths.set(booth.booth_number, booth);
       });
+      
+      // Categorize booths after loading
+      this.categorizeBooths();
 
       Swal.close();
     } catch (error) {
@@ -46,54 +69,62 @@ const BoothManager = {
   },
 
   // Render booths on the floor plan
-  renderBooths() {
+  renderBooths(boothType = 'all') {
+    console.log(boothType);
     const $floorContainer = $(".floor-container");
     if (!$floorContainer.length) return;
 
     // Clear existing booths
     $floorContainer.empty();
 
+    // Select booth collection based on type
+    let boothCollection;
+    switch(boothType) {
+        case 'standard':
+            boothCollection = this.state.standardBooths;
+            break;
+        case 'premium':
+            boothCollection = this.state.premiumBooths;
+            break;
+        default:
+            boothCollection = this.state.booths;
+    }
+    console.log(boothCollection);
     // Group booths by row (A, B, etc.)
     const boothsByRow = new Map();
-    this.state.booths.forEach((booth) => {
-      const row = booth.booth_number.charAt(0);
-      if (!boothsByRow.has(row)) {
-        boothsByRow.set(row, []);
-      }
-      boothsByRow.get(row).push(booth);
+    boothCollection.forEach((booth) => {
+        const row = booth.booth_number.charAt(0);
+        if (!boothsByRow.has(row)) {
+            boothsByRow.set(row, []);
+        }
+        boothsByRow.get(row).push(booth);
     });
+
+    
 
     // Render each row
     boothsByRow.forEach((booths, row) => {
-      const $rowDiv = $("<div>", {
-        class: "flex flex-wrap justify-center",
-      });
-
-      booths
-        .sort((a, b) => {
-          return (
-            parseInt(a.booth_number.slice(1)) -
-            parseInt(b.booth_number.slice(1))
-          );
-        })
-        .forEach((booth) => {
-          $rowDiv.append(this.createBoothElement(booth));
+        const $rowDiv = $("<div>", {
+            class: "flex flex-wrap justify-center"
         });
 
-      // Add aisle after each row except the last
-      if (row !== Array.from(boothsByRow.keys()).pop()) {
-        const $aisle = $("<div>", {
-          class: "w-full h-4 bg-gray-200 my-2",
+        booths.sort((a, b) => {
+            return parseInt(a.booth_number.slice(1)) - parseInt(b.booth_number.slice(1));
+        }).forEach((booth) => {
+            $rowDiv.append(this.createBoothElement(booth));
         });
-        $floorContainer.append($rowDiv);
-        $floorContainer.append($aisle);
-      } else {
-        $floorContainer.append($rowDiv);
-      }
+
+        // Add aisle after each row except the last
+        if (row !== Array.from(boothsByRow.keys()).pop()) {
+            const $aisle = $("<div>", {
+                class: "w-full h-4 bg-gray-200 my-2"
+            });
+            $floorContainer.append($rowDiv);
+            $floorContainer.append($aisle);
+        } else {
+            $floorContainer.append($rowDiv);
+        }
     });
-
-    // Enable tooltips
-    // $('[data-bs-toggle="tooltip"]').tooltip();
   },
 
   // Create a single booth element
@@ -173,7 +204,6 @@ const BoothManager = {
       const $boothElement = $(e.currentTarget);
       const boothId = $boothElement.data("booth");
       const boothData = this.state.booths.get(boothId);
-
       if (
         boothData.status === "reserved" ||
         boothData.status === "processing"

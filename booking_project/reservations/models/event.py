@@ -10,7 +10,8 @@ class Event(models.Model):
     location = models.CharField(max_length=200)
     is_active = models.BooleanField(default=True)
     image = models.ImageField(upload_to='event_images/', null=True, blank=True)
-    floor_plan = models.ImageField(upload_to='floor_plans/', null=True, blank=True)
+    floor_plan_standard = models.ImageField(upload_to='floor_plans/', null=True, blank=True)
+    floor_plan_premium = models.ImageField(upload_to='floor_plans/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -1,5 +1,5 @@
-{% extends 'reservations/base.html' %}
-
+{% extends 'reservations/_layout.html' %}
+{% load static %}
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100">
     <!-- Hero Section -->
@@ -15,10 +15,10 @@
                     Welcome to Our Event
                 </span>
                 <h1 class="text-6xl lg:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-purple-700 mb-8">
-                    Event Name 2024
+                    {{ event.title }}
                 </h1>
                 <p class="text-xl text-gray-700 mb-16 max-w-2xl mx-auto leading-relaxed">
-                    Join us for an immersive experience that brings together innovators, creators, and visionaries.
+                    {{ event.description }}
                 </p>
                 
                 <!-- Stats section -->
@@ -35,40 +35,6 @@
                         <div class="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-800 mb-3 group-hover:scale-110 transition-transform">100+</div>
                         <div class="text-gray-700 font-medium">Featured Exhibitors</div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Navigation Tabs -->
-    <div class="sticky top-16 z-50 bg-white/80 backdrop-blur-lg shadow-lg">
-        <div class="mx-auto px-4 sm:px-6">
-            <div class="flex justify-center py-4">
-                <div class="flex sm:flex-row bg-gray-100/50 rounded-2xl p-2 space-y-2 sm:space-y-0 sm:space-x-2 backdrop-blur-sm w-full sm:w-auto">
-                    <a href="#participants" class="nav-link px-4 sm:px-8 py-4 text-sm font-medium rounded-xl transition-all duration-300 hover:bg-gradient-to-r hover:from-blue-500 hover:to-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                        <span class="flex items-center justify-center sm:justify-start space-x-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                            </svg>
-                            <span>Participants</span>
-                        </span>
-                    </a>
-                    <a href="#sponsors" class="nav-link px-4 sm:px-8 py-4 text-sm font-medium rounded-xl transition-all duration-300 hover:bg-gradient-to-r hover:from-purple-500 hover:to-purple-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
-                        <span class="flex items-center justify-center sm:justify-start space-x-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <span>Sponsors</span>
-                        </span>
-                    </a>
-                    <a href="#exhibitors" class="nav-link px-4 sm:px-8 py-4 text-sm font-medium rounded-xl transition-all duration-300 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-indigo-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
-                        <span class="flex items-center justify-center sm:justify-start space-x-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                            </svg>
-                            <span>Exhibitors</span>
-                        </span>
-                    </a>
                 </div>
             </div>
         </div>
@@ -115,24 +81,8 @@
                 </div>
                 
                 <div id="exhibitors" class="content-section scroll-mt-32 hidden">
-                    <!-- Filter buttons -->
-                    <div class="flex justify-center mb-8">
-                        <div class="inline-flex bg-white/50 backdrop-blur-sm p-1.5 rounded-xl shadow-sm">
-                            <button type="button" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 bg-indigo-500 text-white">
-                                <span>All Exhibitors</span>
-                                <span class="bg-indigo-400/30 px-2 py-0.5 rounded-md text-xs">24</span>
-                            </button>
-                            <button type="button" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 text-gray-700 hover:bg-gray-100 transition-all">
-                                <span>Standard</span>
-                                <span class="bg-gray-100 px-2 py-0.5 rounded-md text-xs">16</span>
-                            </button>
-                            <button type="button" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 text-gray-700 hover:bg-gray-100 transition-all">
-                                <span>Premium</span>
-                                <span class="bg-gray-100 px-2 py-0.5 rounded-md text-xs">8</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="group bg-white/70 backdrop-blur-lg rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20">
+                    <!-- Title Section -->
+                    <div class="group bg-white/70 backdrop-blur-lg rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 mb-8">
                         <div class="p-6 sm:p-8">
                             <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 flex items-center">
                                 <span class="p-3 sm:p-4 bg-gradient-to-br from-indigo-100 to-indigo-50 rounded-xl mr-4 group-hover:shadow-sm transition-all duration-300">
@@ -140,10 +90,133 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                                     </svg>
                                 </span>
-                                Exhibitors
+                                Exhibition Booths Plans
                             </h2>
                             <div class="bg-gradient-to-br from-indigo-50/30 to-white/30 p-6 rounded-xl">
-                                <p class="text-gray-700 leading-relaxed">Explore our exhibitors showcase...</p>
+                                <p class="text-gray-700 leading-relaxed">Choose from our selection of standard and premium exhibition booths designed to showcase your business.</p>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <!-- Standard Booth Card -->
+                        <div class="group relative bg-white/70 backdrop-blur-lg rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                            <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-blue-100/30 opacity-50"></div>
+                            <div class="relative p-8">
+                                <!-- Header -->
+                                <div class="flex items-start justify-between mb-6">
+                                    <div>
+                                        <h3 class="text-2xl font-bold text-gray-900">Standard Booth</h3>
+                                        <p class="text-blue-600 font-medium">Best for small businesses</p>
+                                    </div>
+                                    <div class="p-3 bg-blue-50 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                                        <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                
+                                <!-- Pricing -->
+                                <div class="mb-6">
+                                    <p class="text-4xl font-bold text-gray-900">TZS {{ booth_stats.standard_price }}<span class="text-sm font-normal text-gray-500">/booth</span></p>
+                                    <div class="flex items-center mt-2 space-x-2">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                            {{ booth_stats.standard }} Available
+                                        </span>
+                                    </div>
+                                </div>
+                    
+                                <!-- Features -->
+                                <ul class="space-y-4 mb-8">
+                                    <li class="flex items-center text-gray-600">
+                                        <svg class="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        Standard Location
+                                    </li>
+                                    <li class="flex items-center text-gray-600">
+                                        <svg class="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        Basic Booth Setup
+                                    </li>
+                                    <li class="flex items-center text-gray-600">
+                                        <svg class="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        Single Power Outlet
+                                    </li>
+                                </ul>
+                    
+                                <!-- CTA Button -->
+                                <button onclick="BoothManager.renderBooths('standard')" 
+                                    class="w-full py-4 px-6 text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl font-semibold
+                                    hover:from-blue-700 hover:to-blue-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 
+                                    transition-all duration-200 shadow-lg hover:shadow-xl">
+                                    View Standard Booths
+                                </button>
+                            </div>
+                        </div>
+                    
+                        <!-- Premium Booth Card -->
+                        <div class="group relative bg-white/70 backdrop-blur-lg rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                            <div class="absolute inset-0 bg-gradient-to-br from-purple-50 to-purple-100/30 opacity-50"></div>
+                            <div class="relative p-8">
+                                <!-- Header -->
+                                <div class="flex items-start justify-between mb-6">
+                                    <div>
+                                        <div class="flex items-center space-x-2">
+                                            <h3 class="text-2xl font-bold text-gray-900">Premium Booth</h3>
+                                            <span class="px-2.5 py-0.5 text-xs font-medium bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full">Popular</span>
+                                        </div>
+                                        <p class="text-purple-600 font-medium">Enhanced visibility & features</p>
+                                    </div>
+                                    <div class="p-3 bg-purple-50 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                                        <svg class="w-10 h-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                
+                                <!-- Pricing -->
+                                <div class="mb-6">
+                                    <p class="text-4xl font-bold text-gray-900">TZS {{ booth_stats.premium_price }}<span class="text-sm font-normal text-gray-500">/booth</span></p>
+                                    <div class="flex items-center mt-2 space-x-2">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                                            {{ booth_stats.premium }} Available
+                                        </span>
+                                    </div>
+                                </div>
+                    
+                                <!-- Features -->
+                                <ul class="space-y-4 mb-8">
+                                    <li class="flex items-center text-gray-600">
+                                        <svg class="w-5 h-5 text-purple-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        Premium Location
+                                    </li>
+                                    <li class="flex items-center text-gray-600">
+                                        <svg class="w-5 h-5 text-purple-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        Professional Booth Setup
+                                    </li>
+                                    <li class="flex items-center text-gray-600">
+                                        <svg class="w-5 h-5 text-purple-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        Multiple Power Outlets
+                                    </li>
+                                </ul>
+                    
+                                <!-- CTA Button -->
+                                <button onclick="BoothManager.renderBooths('premium')" 
+                                    class="w-full py-4 px-6 text-white bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold
+                                    hover:from-purple-700 hover:to-pink-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 
+                                    transition-all duration-200 shadow-lg hover:shadow-xl">
+                                    View Premium Booths
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -154,81 +227,47 @@
     </div>
 </div>
 {% endblock %}
+
 {% block extra_js %}
+<script src="{% static 'js/boothman.js' %}"></script>
+
 <script>
     $(document).ready(function() {
-        // Get header height for offset calculations
+        BoothManager.init("{{ event.id }}");
         const headerHeight = $('.sticky').outerHeight();
-        const extraPadding = 32; // Additional padding for visual comfort
-        
-        // Show participants section by default
-        $('#participants').removeClass('hidden');
-        $('a[href="#participants"]').addClass('bg-gradient-to-r from-blue-500 to-blue-600 text-white');
-        
-        // If URL contains hash on page load, scroll to the correct position
-        if (window.location.hash) {
-            const targetId = window.location.hash;
+        const extraPadding = 32;
+
+        function showSection(targetId) {
             const $target = $(targetId);
-            if ($target.length) {
-                // Show correct section
-                $('.content-section').addClass('hidden');
-                $target.removeClass('hidden');
-                
-                // Update nav styles
-                $('.nav-link').removeClass('bg-gradient-to-r from-blue-500 to-blue-600 from-purple-500 to-purple-600 from-indigo-500 to-indigo-600 text-white');
-                $(`a[href="${targetId}"]`).addClass('bg-gradient-to-r text-white');
-                
-                // Add appropriate gradient
-                if (targetId === '#participants') {
-                    $(`a[href="${targetId}"]`).addClass('from-blue-500 to-blue-600');
-                } else if (targetId === '#sponsors') {
-                    $(`a[href="${targetId}"]`).addClass('from-purple-500 to-purple-600');
-                } else if (targetId === '#exhibitors') {
-                    $(`a[href="${targetId}"]`).addClass('from-indigo-500 to-indigo-600');
-                }
-                
-                // Scroll to correct position after small delay
-                setTimeout(() => {
-                    const targetPosition = $target.offset().top - (headerHeight + extraPadding);
-                    window.scrollTo({
-                        top: targetPosition,
-                        behavior: 'smooth'
-                    });
-                }, 100);
-            }
-        }
-        
-        $('.nav-link').click(function(e) {
-            e.preventDefault();
-            const targetId = $(this).attr('href');
-            const $target = $(targetId);
-            
-            // Hide all sections
             $('.content-section').addClass('hidden');
-            // Show target section
             $target.removeClass('hidden');
-            
-            // Remove active styles from all links
             $('.nav-link').removeClass('bg-gradient-to-r from-blue-500 to-blue-600 from-purple-500 to-purple-600 from-indigo-500 to-indigo-600 text-white');
-            
-            // Add appropriate gradient based on section
             if (targetId === '#participants') {
-                $(this).addClass('bg-gradient-to-r from-blue-500 to-blue-600 text-white');
+                $(`a[href="${targetId}"]`).addClass('bg-gradient-to-r from-blue-500 to-blue-600 text-white');
             } else if (targetId === '#sponsors') {
-                $(this).addClass('bg-gradient-to-r from-purple-500 to-purple-600 text-white');
+                $(`a[href="${targetId}"]`).addClass('bg-gradient-to-r from-purple-500 to-purple-600 text-white');
             } else if (targetId === '#exhibitors') {
-                $(this).addClass('bg-gradient-to-r from-indigo-500 to-indigo-600 text-white');
+                $(`a[href="${targetId}"]`).addClass('bg-gradient-to-r from-indigo-500 to-indigo-600 text-white');
             }
-            
-            // Update URL hash without scrolling
-            history.pushState(null, null, targetId);
-            
-            // Calculate scroll position and scroll smoothly
             const targetPosition = $target.offset().top - (headerHeight + extraPadding);
             window.scrollTo({
                 top: targetPosition,
                 behavior: 'smooth'
             });
+        }
+
+        $('#participants').removeClass('hidden');
+        $('a[href="#participants"]').addClass('bg-gradient-to-r from-blue-500 to-blue-600 text-white');
+
+        if (window.location.hash) {
+            showSection(window.location.hash);
+        }
+
+        $('.nav-link').click(function(e) {
+            e.preventDefault();
+            const targetId = $(this).attr('href');
+            showSection(targetId);
+            history.pushState(null, null, targetId);
         });
     });
 </script>

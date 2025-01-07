@@ -28,9 +28,9 @@
                     <h2 class="text-lg font-semibold">Event Floor Plan</h2>
                 </div>
                 <div class="p-4">
-                    {% if event.floor_plan %}
+                    {% if event.floor_plan_standard %}
                         <div class="relative aspect-video max-h-[600px] overflow-hidden rounded-lg">
-                            <img src="{{ event.floor_plan.url }}" alt="Event Floor Plan" 
+                            <img src="{{ event.floor_plan_standard.url }}" alt="Event Floor Plan" 
                                 class="object-contain w-full h-full">
                         </div>
                     {% else %}

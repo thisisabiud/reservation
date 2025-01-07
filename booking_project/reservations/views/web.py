@@ -1,8 +1,13 @@
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
+# from django.views.decorators.cache import cache_page
+from django.contrib import messages
+from django.db.models import Count, Q
+from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework.views import APIView
 
 from reservations.models import Contact, Booking
+from reservations.models.choices import BoothType
 from reservations.serializers import BookingSerializer, BoothSerializer, ContactSerializer
 
 from rest_framework.response import Response
@@ -27,12 +32,44 @@ def events_list(request):
     context = {'events': events_page}
     return render(request, 'reservations/events_list.html', context)
 
-#create event detail view
+# @cache_page(60 * 15)
 def event_details(request, event_id):
-    event = get_object_or_404(Event, id=event_id)
-    return render(request, 'reservations/event_details.html', {
-        'event': event
-    })
+    """
+    Display event details with booth and exhibitor information.
+    
+    Args:
+        request: HTTP request object
+        event_id: ID of the event to display
+    
+    Returns:
+        Rendered event details template with context
+    """
+    try:
+        # Get event with prefetched booths
+        event = get_object_or_404(Event.objects.prefetch_related('booths'), id=event_id)
+        
+        # Get booth statistics
+        booth_stats = event.booths.aggregate(
+            total_booths=Count('id'),
+            standard_booths=Count('id', filter=Q(booth_type='standard')),
+            premium_booths=Count('id', filter=Q(booth_type='premium')),
+            available_booths=Count('id', filter=Q(status='available'))
+        )
+        
+        context = {
+            'event': event,
+            'booth_stats': booth_stats,
+            'booths': {
+                'standard': event.booths.filter(booth_type=BoothType.STANDARD),
+                'premium': event.booths.filter(booth_type=BoothType.PREMIUM)
+            }
+        }
+        
+        return render(request, 'reservations/event_details.html', context)
+        
+    except ObjectDoesNotExist:
+        messages.error(request, 'Event not found.')
+        return redirect('event_list')
 
 
 def floor_plan(request, event_id):
@@ -108,4 +145,3 @@ class BookingView(APIView):
             booking = serializer.save()
             return Response(BookingSerializer(booking).data, status=201)
         return Response(serializer.errors, status=400)
-

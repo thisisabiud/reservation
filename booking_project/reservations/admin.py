@@ -38,7 +38,16 @@ class BoothAdmin(admin.ModelAdmin):
     def mark_as_available(self, request, queryset):
         queryset.update(status=BoothStatus.AVAILABLE)
     
-    actions = [mark_as_available]
+    @admin.action(description='Mark selected booths as standard')
+    def mark_as_standard(self, request, queryset):
+        queryset.update(booth_type='standard')
+        
+    @admin.action(description='Mark selected booths as premium')
+    def mark_as_premium(self, request, queryset):
+        queryset.update(booth_type='premium')
+    
+    actions = [mark_as_available, mark_as_standard, mark_as_premium]
+
     list_display = ('booth_number', 'booth_type', 'status', 'created_at')
     list_filter = ('status', 'booth_type', 'event')
     search_fields = ('booth_number', 'event__title')
@@ -82,7 +91,7 @@ class EventAdmin(admin.ModelAdmin):
     
     fieldsets = (
         (None, {
-            'fields': ('title', 'description', 'image', 'floor_plan')
+            'fields': ('title', 'description', 'image', 'floor_plan_standard', 'floor_plan_premium')
         }),
         ('Event Details', {
             'fields': ('start_date', 'end_date', 'location', 'is_active')
