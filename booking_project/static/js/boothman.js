@@ -15,47 +15,76 @@ const BoothManager = {
   },
 
   async fetchBooths(boothType = 'all') {
-    console.log('Fetching booths:', { boothType });
-    Swal.fire({
-      title: "Loading booths...",
-      didOpen: () => Swal.showLoading()
-    });
-
     try {
-      const url = new URL('/api/booths', window.location.origin);
-      url.searchParams.append('event_id', this.state.eventId);
-      url.searchParams.append('booth_type', boothType);
+        // Update URL with new booth type
+        const url = new URL(window.location.href);
+        url.searchParams.set('booth_type', boothType);
+        window.history.pushState({}, '', url);
 
-      const response = await fetch(url);
-      const boothsData = await response.json();
-      console.log('Fetched booth data:', boothsData);
+        // Update floor plan
+        this.updateFloorPlan(boothType);
 
-      if (!response.ok) {
-        throw new Error(boothsData.error || 'Failed to fetch booths');
-      }
+        // Fetch booths
+        const apiUrl = new URL('/api/booths', window.location.origin);
+        apiUrl.searchParams.append('event_id', this.state.eventId);
+        apiUrl.searchParams.append('booth_type', boothType);
 
-      // Clear and update booths collection
-      this.state.booths.clear();
-      boothsData.forEach((booth) => {
-        console.log('Adding booth:', booth);
-        this.state.booths.set(booth.booth_number, booth);
-      });
+        const response = await fetch(apiUrl);
+        const boothsData = await response.json();
 
-      // Render the fetched booths
-      this.renderBooths();
-      Swal.close();
-      return boothsData;
+        console.log('Fetched booth data:', boothsData);
+
+        if (!response.ok) {
+          throw new Error(boothsData.error || 'Failed to fetch booths');
+        }
+
+        // Clear and update booths collection
+        this.state.booths.clear();
+        boothsData.forEach((booth) => {
+          console.log('Adding booth:', booth);
+          this.state.booths.set(booth.booth_number, booth);
+        });
+
+        // Render the fetched booths
+        this.renderBooths();
+        Swal.close();
+        return boothsData;
 
     } catch (error) {
-      console.error("Error fetching booths:", error);
-      Swal.fire({
-        title: "Error",
-        text: error.message,
-        icon: "error"
-      });
-      return [];
+        console.error("Error fetching booths:", error);
+        Swal.fire({
+          title: "Error",
+          text: error.message,
+          icon: "error"
+        });
+        return [];
     }
   },
+
+  updateFloorPlan(boothType) {
+    const container = document.getElementById('floorPlanContainer');
+    const imageContainer = container.querySelector('img') || container.querySelector('.flex');
+    
+    if (boothType === 'premium' && container.dataset.premiumPlan) {
+        imageContainer.outerHTML = `
+            <img src="${container.dataset.premiumPlan}" 
+                 alt="Premium Floor Plan"
+                 class="w-full h-auto rounded-lg">
+        `;
+    } else if (boothType === 'standard' && container.dataset.standardPlan) {
+        imageContainer.outerHTML = `
+            <img src="${container.dataset.standardPlan}" 
+                 alt="Standard Floor Plan"
+                 class="w-full h-auto rounded-lg">
+        `;
+    } else {
+        imageContainer.outerHTML = `
+            <div class="flex items-center justify-center h-48 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <p class="text-gray-500 dark:text-gray-400">No floor plan available for ${boothType} booths</p>
+            </div>
+        `;
+    }
+},
 
   renderBooths() {
     console.log('Rendering booths, total:', this.state.booths.size);
@@ -97,65 +126,77 @@ const BoothManager = {
   createBoothElement(booth) {
     $("#checkoutButton").prop("disabled", !this.state.selectedBooths.size);
 
+    const boothStyles = {
+        available: `
+            bg-white 
+            hover:bg-gradient-to-br hover:from-indigo-50/80 hover:to-blue-50/80
+            transform hover:scale-105 hover:-translate-y-1
+            border-2 border-blue-400/50
+            hover:border-gradient-to-r hover:from-blue-400 hover:to-indigo-400
+            cursor-pointer
+            shadow-lg hover:shadow-xl hover:shadow-blue-100
+            hover:ring-2 hover:ring-blue-200 hover:ring-opacity-50
+        `,
+        reserved: `
+            bg-gray-100 
+            border-2 border-gray-300
+            cursor-not-allowed
+            opacity-75
+            grayscale
+        `,
+        processing: `
+            bg-gradient-to-br from-yellow-50 to-yellow-100
+            border-2 border-yellow-400
+            animate-pulse
+        `,
+        selected: `
+            bg-gradient-to-br from-indigo-100 to-blue-100
+            border-2 border-indigo-500
+            transform scale-105
+            shadow-xl shadow-indigo-100
+            ring-2 ring-indigo-200
+        `
+    };
+
     const $div = $("<div>", {
-      class: `booth w-[120px] h-[120px] m-[10px] inline-flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ease-in-out rounded-[12px] relative font-semibold text-[1.2em] shadow-md transform perspective-[1000px] rotate-x-[5deg] p-[10px] text-center backdrop-blur-[5px] ${
-        booth.status
-      } relative border-2 p-2 m-1 cursor-pointer 
-                    ${
-                      booth.status === "available"
-                        ? "bg-white hover:bg-blue-100"
-                        : booth.status === "reserved"
-                        ? "bg-gray-200 opacity-50"
-                        : booth.status === "processing"
-                        ? "bg-yellow-200"
-                        : ""
-                    }`,
-      "data-booth": booth.booth_number,
-      "data-price": booth.price,
-      "data-id": booth.id,
+        class: `
+            booth 
+            w-[120px] h-[120px] 
+            m-[10px] 
+            inline-flex flex-col 
+            items-center justify-center 
+            transition-all duration-300 ease-in-out 
+            rounded-[12px] 
+            relative 
+            font-semibold text-[1.2em] 
+            transform perspective-[1000px] rotate-x-[5deg] 
+            p-[10px] 
+            text-center 
+            backdrop-blur-[5px]
+            ${boothStyles[booth.status]}
+        `,
+        "data-booth": booth.booth_number,
+        "data-price": booth.price,
+        "data-id": booth.id,
     });
 
-    let boothContent = "";
-
-    if (booth.status === "reserved") {
-      boothContent = `
-                <span class="block text-xs text-gray-500">${this.formatBoothType(
-                  booth.booth_type
-                )}</span>
-                <span class="text-red-500 font-bold">Reserved</span>
-            `;
-
-      // const tooltipContent = `
-      //     <div class="text-sm">
-      //         <strong>Booth:</strong> ${booth.booth_number}<br>
-      //         <strong>Company:</strong> ${booth.reservation_info.company_name}<br>
-      //         <strong>Contact:</strong> ${booth.reservation_info.contact_person}<br>
-      //         ${booth.reservation_info.email ? `<strong>Email:</strong> ${booth.reservation_info.email}<br>` : ''}
-      //         ${booth.reservation_info.phone ? `<strong>Phone:</strong> ${booth.reservation_info.phone}` : ''}
-      //     </div>
-      // `;
-
-      // $div.attr({
-      //     'data-bs-toggle': 'tooltip',
-      //     'data-bs-html': 'true',
-      //     'data-bs-placement': 'top',
-      //     'title': tooltipContent
-      // });
-    } else {
-      boothContent = `
-                <span class="block text-xs text-gray-600">${this.formatBoothType(
-                  booth.booth_type
-                )}</span>
-                <span class="font-bold">${booth.booth_number}</span>
-                <span class="text-sm text-blue-600">TZS ${parseFloat(
-                  booth.price
-                ).toLocaleString()}</span>
-            `;
-    }
+    let boothContent = `
+        <span class="absolute top-2 text-xs font-medium text-gray-500">
+            ${this.formatBoothType(booth.booth_type)}
+        </span>
+        <span class="text-lg font-bold text-gray-800">
+            ${booth.booth_number}
+        </span>
+        <span class="absolute bottom-2 text-sm font-medium ${
+            booth.status === 'reserved' ? 'text-red-500' : 'text-blue-600'
+        }">
+            ${booth.status === 'reserved' ? 'Reserved' : `TZS ${booth.price}`}
+        </span>
+    `;
 
     $div.html(boothContent);
     return $div;
-  },
+},
 
   // Format booth type with proper capitalization
   formatBoothType(type) {

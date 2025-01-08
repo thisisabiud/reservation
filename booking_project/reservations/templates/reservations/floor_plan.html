@@ -2,114 +2,161 @@
 {% load static %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-    <div class="container mx-auto px-4 py-6 space-y-6">
-        <!-- Header Section -->
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-2">
-            <h1 class="font-bold text-2xl sm:text-3xl text-gray-900">{{ event.title }} - Floor Plan</h1>
-            <div class="flex flex-wrap gap-3">
-                <button id="toggleFloorPlanBtn" class="inline-flex items-center px-4 sm:px-6 py-2.5 bg-indigo-100 text-indigo-700 rounded-lg font-medium text-sm uppercase tracking-wide 
-                    hover:bg-indigo-200 active:bg-indigo-300 transition-all duration-200 
-                    focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                    <i class="bi bi-eye mr-2"></i> View Floor Plan
-                </button>
-                <a href="{% url 'reservations:events_list' %}" class="inline-flex items-center px-4 sm:px-6 py-2.5 bg-teal-100 text-teal-700 rounded-lg font-medium text-sm uppercase tracking-wide 
-                    hover:bg-teal-200 active:bg-teal-300 transition-all duration-200
-                    focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2">
-                    <i class="bi bi-arrow-left mr-2"></i> Back to Events
-                </a>
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <!-- Sticky Header -->
+    <header class="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/20">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'reservations:events_list' %}" 
+                       class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                        <i class="bi bi-arrow-left text-xl"></i>
+                    </a>
+                    <h1 class="font-bold text-2xl sm:text-3xl text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-600 dark:from-indigo-400 dark:to-blue-400">
+                        {{ event.title }}
+                    </h1>
+                </div>
+                
+                <!-- Navigation Controls -->
+                <div class="flex items-center space-x-4">
+                    <!-- Booth Type Filter -->
+                    <!-- Get booth type from URL or default to 'all' -->
+                    <div class="inline-flex bg-gray-100/50 dark:bg-gray-800/50 rounded-xl p-1.5 backdrop-blur-sm" 
+                         x-data="{ 
+                            activeFilter: new URLSearchParams(window.location.search).get('booth_type') || 'all'
+                         }">
+                       
+                        <button @click="activeFilter = 'standard'" 
+                                onclick="BoothManager.fetchBooths('standard')"
+                                :class="{ 
+                                    'bg-gradient-to-r from-indigo-500 to-blue-500 text-white shadow-lg scale-105': activeFilter === 'standard',
+                                    'text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50': activeFilter !== 'standard'
+                                }"
+                                class="px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 relative group">
+                            <span class="relative z-10">Standard</span>
+                            <div x-show="activeFilter === 'standard'" 
+                                 class="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-blue-500/20 rounded-lg blur"
+                                 x-transition:enter="transition ease-out duration-300"
+                                 x-transition:enter-start="opacity-0 scale-90"
+                                 x-transition:enter-end="opacity-100 scale-100"></div>
+                        </button>
+
+                        <button @click="activeFilter = 'premium'" 
+                                onclick="BoothManager.fetchBooths('premium')"
+                                :class="{ 
+                                    'bg-gradient-to-r from-indigo-500 to-blue-500 text-white shadow-lg scale-105': activeFilter === 'premium',
+                                    'text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50': activeFilter !== 'premium'
+                                }"
+                                class="px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 relative group">
+                            <span class="relative z-10">Premium</span>
+                            <div x-show="activeFilter === 'premium'" 
+                                 class="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-blue-500/20 rounded-lg blur"
+                                 x-transition:enter="transition ease-out duration-300"
+                                 x-transition:enter-start="opacity-0 scale-90"
+                                 x-transition:enter-end="opacity-100 scale-100"></div>
+                        </button>
+                    </div>
+                    
+                    <!-- Floor Plan Toggle -->
+                    <button id="toggleFloorPlanBtn" 
+                            class="inline-flex items-center px-4 py-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-lg text-sm font-medium
+                                   hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-all duration-200">
+                        <i class="bi bi-eye mr-2"></i> View Floor Plan
+                    </button>
+                </div>
             </div>
         </div>
+    </header>
 
-        <!-- Floor Plan Section -->
-        <div id="floorPlanContainer" class="hidden transition-all duration-300 ease-in-out">
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-4">
-                    <h2 class="text-lg font-semibold">Event Floor Plan</h2>
-                </div>
-                <div class="p-4">
-                    {% if event.floor_plan_standard %}
-                    <div class="relative aspect-video max-h-[600px] overflow-hidden rounded-lg">
-                        <img src="{{ event.floor_plan_standard.url }}" alt="Event Floor Plan"
-                            class="object-contain w-full h-full">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Floor Plan Modal -->
+        <div id="floorPlanContainer" 
+             class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-all duration-300"
+             data-standard-plan="{{ event.floor_plan_standard.url }}"
+             data-premium-plan="{{ event.floor_plan_premium.url }}">
+            <div class="container mx-auto px-4 py-8 h-full flex items-center justify-center">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden">
+                    <div class="p-6 relative">
+                        <button onclick="document.getElementById('floorPlanContainer').classList.add('hidden')"
+                                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        <div id="floorPlanImage">
+                            <img src="{{ event.floor_plan_standard.url }}" 
+                                 alt="Floor Plan"
+                                 class="w-full h-auto rounded-lg">
+                        </div>
                     </div>
-                    {% else %}
-                    <div class="flex items-center justify-center h-48 bg-gray-50 rounded-lg">
-                        <p class="text-gray-500 flex items-center">
-                            <i class="bi bi-image-alt mr-2"></i> No floor plan available
-                        </p>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
 
         <!-- Main Content Grid -->
         <div class="grid lg:grid-cols-12 gap-6">
-            <!-- Left Column -->
+            <!-- Left Column - Booth Map -->
             <div class="lg:col-span-8 space-y-6">
-                <!-- Exhibition Map -->
-                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                    <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-4">
-                        <h2 class="text-lg font-semibold">Exhibition Floor Map</h2>
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-200/20">
+                    <div class="bg-gradient-to-r from-indigo-600 to-blue-600 p-6">
+                        <h2 class="text-xl font-bold text-white">Exhibition Floor Map</h2>
                     </div>
-                    <div class="p-4">
-                        <div class="floor-container min-h-[400px]">
-                            <div class="aisle"></div>
+                    <div class="p-6">
+                        <div class="floor-container min-h-[500px] relative">
+                            <!-- Booths will be rendered here -->
                         </div>
                     </div>
                 </div>
 
                 <!-- Legend -->
-                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                    <div class="bg-gray-50 p-4 border-b">
-                        <h2 class="text-lg font-semibold text-gray-900">Key</h2>
-                    </div>
-                    <div class="p-4">
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                            <div class="flex items-center space-x-3">
-                                <div class="border-2 border-black rounded-md w-6 h-6 bg-white"></div>
-                                <span class="text-sm font-medium">Available</span>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <div class="rounded-md w-6 h-6 bg-gray-200"></div>
-                                <span class="text-sm font-medium">Reserved</span>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <div class="rounded-md w-6 h-6 bg-yellow-200"></div>
-                                <span class="text-sm font-medium">Processing</span>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <div class="rounded-md w-6 h-6 bg-blue-200"></div>
-                                <span class="text-sm font-medium">Selected</span>
-                            </div>
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200/20">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Booth Status</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 rounded-lg border-2 border-blue-400/50 bg-white shadow-sm"></div>
+                            <span class="text-sm font-medium dark:text-gray-300">Available</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 rounded-lg bg-gray-200 dark:bg-gray-600"></div>
+                            <span class="text-sm font-medium dark:text-gray-300">Reserved</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 rounded-lg bg-yellow-200 dark:bg-yellow-600"></div>
+                            <span class="text-sm font-medium dark:text-gray-300">Processing</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 rounded-lg bg-blue-200 dark:bg-blue-600"></div>
+                            <span class="text-sm font-medium dark:text-gray-300">Selected</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Column -->
+            <!-- Right Column - Selection Summary -->
             <div class="lg:col-span-4">
-                <div class="bg-white rounded-xl shadow-sm p-6 sticky top-4">
-                    <h2 class="text-xl font-bold text-gray-900 mb-6">Selected Booths</h2>
-                    <div id="selectedBoothsList" class="mb-6 min-h-[100px]">
-                        <p class="text-gray-500 italic">No booths selected</p>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                            <span class="font-semibold text-gray-900">Total Price:</span>
-                            <span id="totalPrice" class="bg-blue-600 text-white px-4 py-1.5 rounded-full font-medium">
-                                TZS 0
-                            </span>
+                <div class="sticky top-24">
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200/20">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Selected Booths</h2>
+                        <div id="selectedBoothsList" class="mb-6 min-h-[100px] space-y-2">
+                            <p class="text-gray-500 dark:text-gray-400 italic">No booths selected</p>
                         </div>
-                        <button type="button" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium
-                            hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200
-                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                            disabled:opacity-50 disabled:cursor-not-allowed" id="checkoutButton"
-                            onclick="BoothManager.showCheckoutModal()">
-                            Proceed to Checkout
-                        </button>
+
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                                <span class="font-semibold text-gray-900 dark:text-white">Total Price:</span>
+                                <span id="totalPrice" class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-4 py-1.5 rounded-full font-medium">
+                                    TZS 0
+                                </span>
+                            </div>
+                            <button type="button" id="checkoutButton"
+                                    onclick="BoothManager.showCheckoutModal()"
+                                    disabled
+                                    class="w-full py-4 px-6 bg-gradient-to-r from-indigo-600 to-blue-600 
+                                           hover:from-indigo-700 hover:to-blue-700
+                                           text-white rounded-xl font-semibold shadow-lg
+                                           disabled:opacity-50 disabled:cursor-not-allowed
+                                           transition-all duration-300 transform hover:scale-[1.02]">
+                                Proceed to Checkout
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -119,33 +166,22 @@
 {% endblock %}
 
 {% block extra_js %}
-
+{{ block.super }}
 <script src="{% static 'js/boothman.js' %}"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         const params = new URLSearchParams(window.location.search);
         const boothType = params.get('booth_type') || 'all';
-        console.log('Initializing with booth type:', boothType);
         BoothManager.init("{{ event.id }}", boothType);
 
-        // Floor Plan Toggle with smooth transition
-        const toggleFloorPlanBtn = document.getElementById('toggleFloorPlanBtn');
-        const floorPlanContainer = document.getElementById('floorPlanContainer');
+        // Set initial active state
+        Alpine.store('activeFilter', boothType);
 
-        toggleFloorPlanBtn.addEventListener('click', function () {
-            floorPlanContainer.classList.toggle('hidden');
-
-            // Update button text and icon
-            const isHidden = floorPlanContainer.classList.contains('hidden');
-            const icon = isHidden ? 'eye' : 'eye-slash';
-            const text = isHidden ? 'View' : 'Hide';
-
-            this.innerHTML = `<i class="bi bi-${icon} mr-2"></i> ${text} Floor Plan`;
-
-            // Smooth scroll to floor plan when showing
-            if (!isHidden) {
-                floorPlanContainer.scrollIntoView({ behavior: 'smooth' });
-            }
+        // Floor Plan Toggle
+        document.getElementById('toggleFloorPlanBtn').addEventListener('click', function() {
+            const container = document.getElementById('floorPlanContainer');
+            container.classList.remove('hidden');
         });
     });
 </script>
