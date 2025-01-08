@@ -92,11 +92,7 @@ def book_booths(request):
         data = json.loads(request.body)
         booth_ids = data.get('booths', [])
         event_id = data.get('event_id')
-        
-        # Add your booking logic here
-        # Update booth statuses in database
-        # Create reservation records
-        # Send confirmation emails, etc.
+
         
         return JsonResponse({'status': 'success'})
     except Exception as e:

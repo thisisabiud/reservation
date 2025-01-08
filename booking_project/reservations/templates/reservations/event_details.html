@@ -149,12 +149,13 @@
                                 </ul>
                     
                                 <!-- CTA Button -->
-                                <button onclick="BoothManager.renderBooths('standard')" 
-                                    class="w-full py-4 px-6 text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl font-semibold
-                                    hover:from-blue-700 hover:to-blue-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 
-                                    transition-all duration-200 shadow-lg hover:shadow-xl">
+                                <a href="{% url 'reservations:floor_plan' event.id %}?booth_type=standard" 
+                                
+                                   class="w-full py-4 px-6 text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl font-semibold
+                                   hover:from-blue-700 hover:to-blue-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 
+                                   transition-all duration-200 shadow-lg hover:shadow-xl text-center block">
                                     View Standard Booths
-                                </button>
+                                </a>
                             </div>
                         </div>
                     
@@ -211,12 +212,12 @@
                                 </ul>
                     
                                 <!-- CTA Button -->
-                                <button onclick="BoothManager.renderBooths('premium')" 
-                                    class="w-full py-4 px-6 text-white bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold
-                                    hover:from-purple-700 hover:to-pink-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 
-                                    transition-all duration-200 shadow-lg hover:shadow-xl">
+                                <a href="{% url 'reservations:floor_plan' event.id %}?booth_type=premium"
+                                   class="w-full py-4 px-6 text-white bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold
+                                   hover:from-purple-700 hover:to-pink-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 
+                                   transition-all duration-200 shadow-lg hover:shadow-xl text-center block">
                                     View Premium Booths
-                                </button>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -229,11 +230,9 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/boothman.js' %}"></script>
 
 <script>
     $(document).ready(function() {
-        BoothManager.init("{{ event.id }}");
         const headerHeight = $('.sticky').outerHeight();
         const extraPadding = 32;
 

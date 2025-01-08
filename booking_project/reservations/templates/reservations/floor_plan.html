@@ -29,16 +29,16 @@
                 </div>
                 <div class="p-4">
                     {% if event.floor_plan_standard %}
-                        <div class="relative aspect-video max-h-[600px] overflow-hidden rounded-lg">
-                            <img src="{{ event.floor_plan_standard.url }}" alt="Event Floor Plan" 
-                                class="object-contain w-full h-full">
-                        </div>
+                    <div class="relative aspect-video max-h-[600px] overflow-hidden rounded-lg">
+                        <img src="{{ event.floor_plan_standard.url }}" alt="Event Floor Plan"
+                            class="object-contain w-full h-full">
+                    </div>
                     {% else %}
-                        <div class="flex items-center justify-center h-48 bg-gray-50 rounded-lg">
-                            <p class="text-gray-500 flex items-center">
-                                <i class="bi bi-image-alt mr-2"></i> No floor plan available
-                            </p>
-                        </div>
+                    <div class="flex items-center justify-center h-48 bg-gray-50 rounded-lg">
+                        <p class="text-gray-500 flex items-center">
+                            <i class="bi bi-image-alt mr-2"></i> No floor plan available
+                        </p>
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -95,7 +95,7 @@
                     <div id="selectedBoothsList" class="mb-6 min-h-[100px]">
                         <p class="text-gray-500 italic">No booths selected</p>
                     </div>
-                    
+
                     <div class="space-y-4">
                         <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
                             <span class="font-semibold text-gray-900">Total Price:</span>
@@ -103,12 +103,10 @@
                                 TZS 0
                             </span>
                         </div>
-                        <button type="button" 
-                            class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium
+                        <button type="button" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium
                             hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200
                             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                            disabled:opacity-50 disabled:cursor-not-allowed"
-                            id="checkoutButton"
+                            disabled:opacity-50 disabled:cursor-not-allowed" id="checkoutButton"
                             onclick="BoothManager.showCheckoutModal()">
                             Proceed to Checkout
                         </button>
@@ -124,22 +122,24 @@
 
 <script src="{% static 'js/boothman.js' %}"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize BoothManager
-        BoothManager.init("{{ event.id }}");
+    document.addEventListener('DOMContentLoaded', function () {
+        const params = new URLSearchParams(window.location.search);
+        const boothType = params.get('booth_type') || 'all';
+        console.log('Initializing with booth type:', boothType);
+        BoothManager.init("{{ event.id }}", boothType);
 
         // Floor Plan Toggle with smooth transition
         const toggleFloorPlanBtn = document.getElementById('toggleFloorPlanBtn');
         const floorPlanContainer = document.getElementById('floorPlanContainer');
-        
-        toggleFloorPlanBtn.addEventListener('click', function() {
+
+        toggleFloorPlanBtn.addEventListener('click', function () {
             floorPlanContainer.classList.toggle('hidden');
-            
+
             // Update button text and icon
             const isHidden = floorPlanContainer.classList.contains('hidden');
             const icon = isHidden ? 'eye' : 'eye-slash';
             const text = isHidden ? 'View' : 'Hide';
-            
+
             this.innerHTML = `<i class="bi bi-${icon} mr-2"></i> ${text} Floor Plan`;
 
             // Smooth scroll to floor plan when showing

@@ -1,129 +1,95 @@
 const BoothManager = {
-  // State management
   state: {
     selectedBooths: new Set(),
     processingBooths: new Set(),
     booths: new Map(),
-    standardBooths: new Map(),
-    premiumBooths: new Map(),
     eventId: null,
     selectedIds: new Set(),
   },
 
-  // Initialize the floor plan
-  async init(eventId) {
+  async init(eventId, boothType = 'all') {
+    console.log('Initializing BoothManager:', { eventId, boothType });
     this.state.eventId = eventId;
-    await this.fetchBooths();
-    this.renderBooths();
+    await this.fetchBooths(boothType);
     this.setupEventListeners();
   },
 
-  // Categorize booths into standard and premium
-  categorizeBooths() {
-    this.state.booths.forEach(booth => {
-      if (booth.booth_type === 'standard') {
-        this.state.standardBooths.set(booth.booth_number, booth);
-      } else if (booth.booth_type === 'premium') {
-        this.state.premiumBooths.set(booth.booth_number, booth);
-      }
-    });
-  },
-
-  // Fetch booths from API
-  async fetchBooths() {
+  async fetchBooths(boothType = 'all') {
+    console.log('Fetching booths:', { boothType });
     Swal.fire({
       title: "Loading booths...",
-      didOpen: () => Swal.showLoading(),
+      didOpen: () => Swal.showLoading()
     });
 
     try {
-      const response = await fetch(
-        `/api/booths/?event_id=${this.state.eventId}`
-      );
-      const boothsData = await response.json();
-    
-      
-      // Clear all collections
-      this.state.booths.clear();
-      this.state.standardBooths.clear();
-      this.state.premiumBooths.clear();
+      const url = new URL('/api/booths', window.location.origin);
+      url.searchParams.append('event_id', this.state.eventId);
+      url.searchParams.append('booth_type', boothType);
 
-      // Store and categorize booths
+      const response = await fetch(url);
+      const boothsData = await response.json();
+      console.log('Fetched booth data:', boothsData);
+
+      if (!response.ok) {
+        throw new Error(boothsData.error || 'Failed to fetch booths');
+      }
+
+      // Clear and update booths collection
+      this.state.booths.clear();
       boothsData.forEach((booth) => {
+        console.log('Adding booth:', booth);
         this.state.booths.set(booth.booth_number, booth);
       });
-      
-      // Categorize booths after loading
-      this.categorizeBooths();
 
+      // Render the fetched booths
+      this.renderBooths();
       Swal.close();
+      return boothsData;
+
     } catch (error) {
       console.error("Error fetching booths:", error);
-      Swal.close();
       Swal.fire({
         title: "Error",
         text: error.message,
-        icon: "error",
+        icon: "error"
       });
+      return [];
     }
   },
 
-  // Render booths on the floor plan
-  renderBooths(boothType = 'all') {
-    console.log(boothType);
+  renderBooths() {
+    console.log('Rendering booths, total:', this.state.booths.size);
     const $floorContainer = $(".floor-container");
-    if (!$floorContainer.length) return;
+    if (!$floorContainer.length) {
+      console.error('Floor container not found');
+      return;
+    }
 
-    // Clear existing booths
     $floorContainer.empty();
 
-    // Select booth collection based on type
-    let boothCollection;
-    switch(boothType) {
-        case 'standard':
-            boothCollection = this.state.standardBooths;
-            break;
-        case 'premium':
-            boothCollection = this.state.premiumBooths;
-            break;
-        default:
-            boothCollection = this.state.booths;
-    }
-    console.log(boothCollection);
-    // Group booths by row (A, B, etc.)
+    // Group booths by row
     const boothsByRow = new Map();
-    boothCollection.forEach((booth) => {
-        const row = booth.booth_number.charAt(0);
-        if (!boothsByRow.has(row)) {
-            boothsByRow.set(row, []);
-        }
-        boothsByRow.get(row).push(booth);
+    this.state.booths.forEach((booth) => {
+      const row = booth.booth_number.charAt(0);
+      if (!boothsByRow.has(row)) {
+        boothsByRow.set(row, []);
+      }
+      boothsByRow.get(row).push(booth);
     });
 
-    
+    console.log('Booths by row:', [...boothsByRow.entries()]);
 
-    // Render each row
     boothsByRow.forEach((booths, row) => {
-        const $rowDiv = $("<div>", {
-            class: "flex flex-wrap justify-center"
-        });
+      const $rowDiv = $("<div>", {
+        class: "flex flex-wrap justify-center mb-4"
+      });
 
-        booths.sort((a, b) => {
-            return parseInt(a.booth_number.slice(1)) - parseInt(b.booth_number.slice(1));
-        }).forEach((booth) => {
-            $rowDiv.append(this.createBoothElement(booth));
-        });
+      booths.forEach((booth) => {
+        const $boothElement = this.createBoothElement(booth);
+        $rowDiv.append($boothElement);
+      });
 
-        // Add aisle after each row except the last
-        if (row !== Array.from(boothsByRow.keys()).pop()) {
-            const $aisle = $("<div>", {
-                class: "w-full h-4 bg-gray-200 my-2"
-            });
-            $floorContainer.append($rowDiv);
-            $floorContainer.append($aisle);
-        } else {
-            $floorContainer.append($rowDiv);
-        }
+      $floorContainer.append($rowDiv);
     });
   },
 
@@ -600,6 +566,7 @@ const BoothManager = {
       $("input[name=csrfmiddlewaretoken]").val() ||
       document.cookie.replace(
         /(?:(?:^|.*;\s*)csrftoken\s*\=\s*([^;]*).*$)|^.*$/,
+
         "$1"
       )
     );
