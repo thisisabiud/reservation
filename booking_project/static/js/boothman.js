@@ -128,33 +128,42 @@ const BoothManager = {
 
     const boothStyles = {
         available: `
-            bg-white 
+            bg-white dark:bg-gray-800
             hover:bg-gradient-to-br hover:from-indigo-50/80 hover:to-blue-50/80
+            dark:hover:from-indigo-900/30 dark:hover:to-blue-900/30
             transform hover:scale-105 hover:-translate-y-1
-            border-2 border-blue-400/50
+            border-2 border-blue-400/50 dark:border-blue-500/50
             hover:border-gradient-to-r hover:from-blue-400 hover:to-indigo-400
+            dark:hover:from-blue-500 dark:hover:to-indigo-500
             cursor-pointer
-            shadow-lg hover:shadow-xl hover:shadow-blue-100
-            hover:ring-2 hover:ring-blue-200 hover:ring-opacity-50
+            shadow-lg hover:shadow-xl hover:shadow-blue-100 dark:hover:shadow-blue-900/30
+            hover:ring-2 hover:ring-blue-200 dark:hover:ring-blue-700 hover:ring-opacity-50
         `,
         reserved: `
-            bg-gray-100 
-            border-2 border-gray-300
+            bg-gray-100 dark:bg-gray-700
+            border-2 border-gray-300 dark:border-gray-600
             cursor-not-allowed
             opacity-75
             grayscale
         `,
         processing: `
             bg-gradient-to-br from-yellow-50 to-yellow-100
-            border-2 border-yellow-400
+            dark:from-yellow-900/30 dark:to-yellow-800/30
+            border-2 border-yellow-400 dark:border-yellow-500
             animate-pulse
         `,
         selected: `
-            bg-gradient-to-br from-indigo-100 to-blue-100
-            border-2 border-indigo-500
-            transform scale-105
-            shadow-xl shadow-indigo-100
-            ring-2 ring-indigo-200
+            bg-blue-200 dark:bg-blue-600
+            border-2 border-blue-400 dark:border-blue-500
+            transform scale-110 -translate-y-1
+            shadow-lg shadow-blue-200/50 dark:shadow-blue-900/50
+            ring-4 ring-blue-300 dark:ring-blue-600 ring-opacity-50
+            z-10
+            backdrop-blur-sm
+            hover:shadow-xl
+            hover:ring-blue-400 dark:hover:ring-blue-500
+            text-gray-900 dark:text-white
+            cursor-pointer
         `
     };
 
@@ -181,14 +190,16 @@ const BoothManager = {
     });
 
     let boothContent = `
-        <span class="absolute top-2 text-xs font-medium text-gray-500">
+        <span class="absolute top-2 text-xs font-medium text-gray-500 dark:text-gray-400">
             ${this.formatBoothType(booth.booth_type)}
         </span>
-        <span class="text-lg font-bold text-gray-800">
+        <span class="text-lg font-bold text-gray-800 dark:text-gray-200">
             ${booth.booth_number}
         </span>
         <span class="absolute bottom-2 text-sm font-medium ${
-            booth.status === 'reserved' ? 'text-red-500' : 'text-blue-600'
+            booth.status === 'reserved' 
+            ? 'text-red-500 dark:text-red-400' 
+            : 'text-blue-600 dark:text-blue-400'
         }">
             ${booth.status === 'reserved' ? 'Reserved' : `TZS ${booth.price}`}
         </span>
@@ -211,21 +222,20 @@ const BoothManager = {
       const $boothElement = $(e.currentTarget);
       const boothId = $boothElement.data("booth");
       const boothData = this.state.booths.get(boothId);
-      if (
-        boothData.status === "reserved" ||
-        boothData.status === "processing"
-      ) {
-        return;
+      
+      if (boothData.status === "reserved" || boothData.status === "processing") {
+          return;
       }
 
-      $boothElement.toggleClass("selected bg-blue-200");
-
-      if ($boothElement.hasClass("selected")) {
-        this.state.selectedBooths.add(boothId);
+      if (this.state.selectedBooths.has(boothId)) {
+          this.state.selectedBooths.delete(boothId);
+          boothData.status = 'available';
       } else {
-        this.state.selectedBooths.delete(boothId);
+          this.state.selectedBooths.add(boothId);
+          boothData.status = 'selected';
       }
 
+      this.renderBooths();
       this.updateSelectedBoothsList();
     });
   },
@@ -569,38 +579,37 @@ const BoothManager = {
     const $totalElement = $("#totalPrice");
 
     if (this.state.selectedBooths.size === 0) {
-      $listElement.html('<p class="text-gray-500">No booths selected</p>');
-      $totalElement.text("TZS 0");
-      return;
+        $listElement.html('<p class="text-gray-500 dark:text-gray-400">No booths selected</p>');
+        $totalElement.text("TZS 0");
+        return;
     }
 
     let html = '<div class="space-y-2">';
     let totalPrice = 0;
 
     this.state.selectedBooths.forEach((boothId) => {
-      const boothData = this.state.booths.get(boothId);
-      totalPrice += parseFloat(boothData.price);
+        const boothData = this.state.booths.get(boothId);
+        totalPrice += parseFloat(boothData.price);
 
-      html += `
-                <div class="flex justify-between items-center bg-gray-100 p-2 rounded">
-                    <div>
-                        <strong class="text-gray-800">Booth ${boothId}</strong>
-                        <small class="block text-gray-500">${this.formatBoothType(
-                          boothData.booth_type
-                        )}</small>
-                    </div>
-                    <span class="text-blue-600 font-bold">TZS ${parseFloat(
-                      boothData.price
-                    ).toLocaleString()}</span>
+        html += `
+            <div class="flex justify-between items-center bg-gray-100 dark:bg-gray-800 p-2 rounded transition-colors duration-200">
+                <div>
+                    <strong class="text-gray-800 dark:text-gray-200">Booth ${boothId}</strong>
+                    <small class="block text-gray-500 dark:text-gray-400">${this.formatBoothType(
+                        boothData.booth_type
+                    )}</small>
                 </div>
-            `;
+                <span class="text-blue-600 dark:text-blue-400 font-bold">TZS ${parseFloat(
+                    boothData.price
+                ).toLocaleString()}</span>
+            </div>
+        `;
     });
 
     html += "</div>";
     $listElement.html(html);
     $totalElement.text(`TZS ${totalPrice.toLocaleString()}`);
-  },
-
+},
   // Utility method to get CSRF token
   getCSRFToken() {
     return (
