@@ -6,7 +6,7 @@ from .choices import BoothStatus, BoothType
 class Booth(models.Model):
     event = models.ForeignKey('reservations.Event', on_delete=models.CASCADE, related_name='booths')
     booth_number = models.CharField(max_length=10)
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    # price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     booth_type = models.CharField(
         max_length=20,
         choices=BoothType.choices,
@@ -17,16 +17,15 @@ class Booth(models.Model):
         choices=BoothStatus.choices,
         default=BoothStatus.AVAILABLE
     )
-    # reserved_by = models.ForeignKey(
-    #     'reservations.Contact',
-    #     on_delete=models.SET_NULL,
-    #     null=True,
-    #     blank=True,
-    #     related_name='reserved_booths'
-    # )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @property
+    def price(self):
+        if self.booth_type == BoothType.STANDARD:
+            return self.event.standard_price
+        elif self.booth_type == BoothType.PREMIUM:
+            return self.event.premium_price
     class Meta:
         unique_together = ('event', 'booth_number')
         ordering = ['event', 'booth_number']

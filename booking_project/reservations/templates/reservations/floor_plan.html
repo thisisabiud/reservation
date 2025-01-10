@@ -118,48 +118,11 @@
             </div>
         </div>
 
-        <!-- Main Content Grid -->
+        <!-- Grid Container with Mobile Order -->
         <div class="grid lg:grid-cols-12 gap-6">
-            <!-- Left Column - Booth Map -->
-            <div class="lg:col-span-8 space-y-6">
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-200/20">
-                    <div class="bg-gradient-to-r from-indigo-600 to-blue-600 p-6">
-                        <h2 class="text-xl font-bold text-white">Exhibition Floor Map</h2>
-                    </div>
-                    <div class="p-6">
-                        <div class="floor-container min-h-[500px] relative">
-                            <!-- Booths will be rendered here -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Legend -->
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200/20">
-                    <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Booth Status</h3>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-6 h-6 rounded-lg border-2 border-blue-400/50 bg-white shadow-sm"></div>
-                            <span class="text-sm font-medium dark:text-gray-300">Available</span>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <div class="w-6 h-6 rounded-lg bg-gray-200 dark:bg-gray-600"></div>
-                            <span class="text-sm font-medium dark:text-gray-300">Reserved</span>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <div class="w-6 h-6 rounded-lg bg-yellow-200 dark:bg-yellow-600"></div>
-                            <span class="text-sm font-medium dark:text-gray-300">Processing</span>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <div class="w-6 h-6 rounded-lg bg-blue-200 dark:bg-blue-600"></div>
-                            <span class="text-sm font-medium dark:text-gray-300">Selected</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Column - Selection Summary -->
-            <div class="lg:col-span-4">
-                <div class="sticky top-24">
+            <!-- Selected Booths Panel - Comes first on mobile -->
+            <div class="lg:col-span-4 order-first lg:order-last">
+                <div class="lg:sticky lg:top-24">
                     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200/20">
                         <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Selected Booths</h2>
                         <div id="selectedBoothsList" class="mb-6 min-h-[100px] space-y-2">
@@ -183,6 +146,43 @@
                                            transition-all duration-300 transform hover:scale-[1.02]">
                                 Proceed to Checkout
                             </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Floor Plan - Comes second on mobile -->
+            <div class="lg:col-span-8 order-last lg:order-first">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-200/20">
+                    <div class="bg-gradient-to-r from-indigo-600 to-blue-600 p-6">
+                        <h2 class="text-xl font-bold text-white">Exhibition Floor Map</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="floor-container min-h-[500px] relative">
+                            <!-- Booths will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legend -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border mt-4 border-gray-200/20">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Booth Status</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 rounded-lg border-2 border-blue-400/50 bg-white shadow-sm"></div>
+                            <span class="text-sm font-medium dark:text-gray-300">Available</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 rounded-lg bg-gray-200 dark:bg-gray-600"></div>
+                            <span class="text-sm font-medium dark:text-gray-300">Reserved</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 rounded-lg bg-yellow-200 dark:bg-yellow-600"></div>
+                            <span class="text-sm font-medium dark:text-gray-300">Processing</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 rounded-lg bg-blue-200 dark:bg-blue-600"></div>
+                            <span class="text-sm font-medium dark:text-gray-300">Selected</span>
                         </div>
                     </div>
                 </div>

@@ -5,12 +5,17 @@ const BoothManager = {
     booths: new Map(),
     eventId: null,
     selectedIds: new Set(),
+    paymentMethods: [], // Initialize as empty array
+    selectedPaymentMethod: null
   },
 
   async init(eventId, boothType = 'all') {
     console.log('Initializing BoothManager:', { eventId, boothType });
     this.state.eventId = eventId;
-    await this.fetchBooths(boothType);
+    await Promise.all([
+      this.fetchBooths(boothType),
+      this.fetchPaymentMethods()
+    ]);
     this.setupEventListeners();
   },
 
@@ -60,6 +65,28 @@ const BoothManager = {
         return [];
     }
   },
+
+  async fetchPaymentMethods() {
+    try {
+        const response = await fetch(`/api/events/${this.state.eventId}/`);
+        if (!response.ok) throw new Error('Failed to fetch payment methods');
+        
+        const data = await response.json();
+        console.log('Fetched event data:', data);
+        
+        // Extract payment_methods array from response
+        if (data.payment_methods && Array.isArray(data.payment_methods)) {
+            this.state.paymentMethods = data.payment_methods;
+            console.log('Updated payment methods:', this.state.paymentMethods);
+        } else {
+            console.warn('No payment methods found in response');
+            this.state.paymentMethods = [];
+        }
+    } catch (error) {
+        console.error('Error fetching payment methods:', error);
+        this.state.paymentMethods = [];
+    }
+},
 
   updateFloorPlan(boothType) {
     const container = document.getElementById('floorPlanContainer');
@@ -238,161 +265,277 @@ const BoothManager = {
       this.renderBooths();
       this.updateSelectedBoothsList();
     });
+
+    // Add payment type change listener
+    $(document).on('change', 'input[name="payment_type"]', function() {
+      const isMobile = $(this).val() === 'mobile';
+      $('#mobileProviders').toggleClass('hidden', !isMobile);
+      console.log('Payment type changed:', { isMobile, methods: BoothManager.state.paymentMethods });
+    });
   },
 
   // Show checkout modal
   showCheckoutModal() {
+    const isMobile = window.innerWidth < 1024;
     const modalHtml = `
-            <div id="checkoutModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-    <div class="bg-white rounded-xl shadow-2xl w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
-        <!-- Sticky Header -->
-        <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center z-10">
-            <h2 class="text-2xl font-bold text-gray-800">Complete Your Reservation</h2>
-            <button id="closeCheckoutModal" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        </div>
-
-        <div class="p-6">
-            <div class="grid md:grid-cols-2 gap-8">
-                <!-- Selected Booths Section -->
-                <div>
-                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                            </svg>
-                            Selected Booths
-                        </h3>
-                        <div id="checkoutSelectedBooths" class="space-y-3">
-                            <!-- Dynamically populated booths -->
-                        </div>
+        <div id="checkoutModal" class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-50 
+                    flex ${isMobile ? 'items-end' : 'items-center'} justify-center">
+            <div class="bg-white dark:bg-gray-800 
+                        ${isMobile ? 'w-full rounded-t-2xl max-h-[90vh]' : 'rounded-2xl w-11/12 max-w-4xl max-h-[90vh]'}
+                        shadow-2xl overflow-y-auto transform transition-all duration-300 ease-out
+                        ${isMobile ? 'translate-y-0' : 'scale-100'}">
+                
+                ${isMobile ? `
+                    <!-- Mobile Drag Handle -->
+                    <div class="sticky top-0 bg-white dark:bg-gray-800 pt-4 pb-2 px-6 flex justify-center">
+                        <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
                     </div>
+                ` : ''}
 
-                    <div class="bg-blue-50 rounded-lg p-4">
-                        <div class="flex justify-between mb-2">
-                            <span class="text-gray-700">Number of Booths:</span>
-                            <span id="summaryBoothCount" class="font-semibold">0</span>
-                        </div>
-                        <div class="flex justify-between items-center pt-2 border-t border-blue-100">
-                            <span class="font-semibold text-gray-900">Total Amount:</span>
-                            <span id="summaryTotal" class="text-lg font-bold text-blue-600">TZS 0</span>
-                        </div>
-                    </div>
+                <!-- Modal Header -->
+                <div class="sticky top-${isMobile ? '10' : '0'} bg-white dark:bg-gray-800 
+                            border-b border-gray-200 dark:border-gray-700 px-6 py-4 
+                            flex justify-between items-center z-10">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Complete Your Reservation</h2>
+                    <button id="closeCheckoutModal" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
+                        <svg class="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
                 </div>
 
-                <!-- Contact Information Form -->
-                <div>
-                    <form id="checkoutForm" class="space-y-6">
-                       <input type="hidden" name="csrfmiddlewaretoken" value="${
-                         this.getCSRFToken() || ""
-                       }">
-                        
-                        <div class="space-y-4">
-                            <h3 class="text-lg font-semibold flex items-center gap-2">
-                                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                </svg>
-                                Contact Information
-                            </h3>
-
-                            <div class="form-group">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-                                <input type="text" name="company" required 
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="form-group">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
-                                    <input type="text" name="contact" required 
-                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                </div>
-                                <div class="form-group">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                                    <input type="tel" name="phone" required 
-                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <!-- Modal Content -->
+                <div class="p-6">
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <!-- Selected Booths Section -->
+                        <div>
+                            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                                <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                    </svg>
+                                    Selected Booths
+                                </h3>
+                                <div id="checkoutSelectedBooths" class="space-y-3">
+                                    <!-- Dynamically populated booths -->
                                 </div>
                             </div>
 
-                            <div class="form-group">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                                <input type="email" name="email" required 
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <div class="bg-blue-50 rounded-lg p-4">
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-gray-700">Number of Booths:</span>
+                                    <span id="summaryBoothCount" class="font-semibold">0</span>
+                                </div>
+                                <div class="flex justify-between items-center pt-2 border-t border-blue-100">
+                                    <span class="font-semibold text-gray-900">Total Amount:</span>
+                                    <span id="summaryTotal" class="text-lg font-bold text-blue-600">TZS 0</span>
+                                </div>
                             </div>
+                        </div>
 
-                            <!-- Exhibitors Section -->
-                            <div class="mt-6">
-                                <label class="block text-sm font-medium text-gray-700 mb-3">Exhibitors</label>
-                                <div id="exhibitorsContainer" class="space-y-3">
-                                    <div class="exhibitor-field flex items-center gap-2 group">
-                                        <input type="text" 
-                                            name="exhibitors[]" 
-                                            placeholder="Exhibitor name"
-                                            required 
-                                            class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200">
+                        <!-- Contact Information Form -->
+                        <div>
+                            <form id="checkoutForm" class="space-y-6">
+                               <input type="hidden" name="csrfmiddlewaretoken" value="${
+                                 this.getCSRFToken() || ""
+                               }">
+                                
+                                <div class="space-y-4">
+                                    <h3 class="text-lg font-semibold flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                        </svg>
+                                        Contact Information
+                                    </h3>
+
+                                    <div class="form-group">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                                        <input type="text" name="company" required 
+                                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="form-group">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
+                                            <input type="text" name="contact" required 
+                                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                            <input type="tel" name="phone" required 
+                                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                        <input type="email" name="email" required 
+                                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+
+                                    <!-- Exhibitors Section -->
+                                    <div class="mt-6">
+                                        <label class="block text-sm font-medium text-gray-700 mb-3">Exhibitors</label>
+                                        <div id="exhibitorsContainer" class="space-y-3">
+                                            <div class="exhibitor-field flex items-center gap-2 group">
+                                                <input type="text" 
+                                                    name="exhibitors[]" 
+                                                    placeholder="Exhibitor name"
+                                                    required 
+                                                    class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200">
+                                                <button type="button" 
+                                                    class="remove-exhibitor p-2 text-gray-400 hover:text-red-500 rounded-lg opacity-50 group-hover:opacity-100 transition-all duration-200"
+                                                    style="display: none;">
+                                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
                                         <button type="button" 
-                                            class="remove-exhibitor p-2 text-gray-400 hover:text-red-500 rounded-lg opacity-50 group-hover:opacity-100 transition-all duration-200"
-                                            style="display: none;">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            id="addExhibitor"
+                                            class="mt-4 px-5 py-2.5 text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg 
+                                            hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800
+                                            transition-all duration-300 ease-in-out transform hover:scale-[1.02] 
+                                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                                            shadow-sm hover:shadow-md
+                                            flex items-center justify-center gap-3">
+                                            <svg class="w-4 h-4 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                                             </svg>
+                                            <span>Add Exhibitor</span>
                                         </button>
                                     </div>
                                 </div>
-                                <button type="button" 
-                                    id="addExhibitor"
-                                    class="mt-4 px-5 py-2.5 text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg 
-                                    hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800
-                                    transition-all duration-300 ease-in-out transform hover:scale-[1.02] 
-                                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                                    shadow-sm hover:shadow-md
-                                    flex items-center justify-center gap-3">
-                                    <svg class="w-4 h-4 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                                    </svg>
-                                    <span>Add Exhibitor</span>
-                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6 border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                        <h3 class="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
+                            <svg class="w-5 h-5 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                            Payment Method
+                        </h3>
+
+                        <div class="space-y-4">
+                            <!-- Payment Options -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <!-- Cash Option -->
+                                <label class="relative group">
+                                    <input type="radio" name="payment_type" value="cash" class="peer sr-only">
+                                    <div class="p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 cursor-pointer
+                                                transition-all duration-300 hover:border-blue-500/50 dark:hover:border-blue-400/50
+                                                peer-checked:border-blue-500 dark:peer-checked:border-blue-400
+                                                peer-checked:bg-blue-50/50 dark:peer-checked:bg-blue-900/20">
+                                        <div class="flex items-center gap-3">
+                                            <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg group-hover:scale-110 transition-transform">
+                                                <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-900 dark:text-white">Cash Payment</p>
+                                                <p class="text-sm text-gray-500 dark:text-gray-400">Pay at our office</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </label>
+
+                                <!-- Mobile Money Option -->
+                                <label class="relative group">
+                                    <input type="radio" name="payment_type" value="mobile" class="peer sr-only">
+                                    <div class="p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 cursor-pointer
+                                                transition-all duration-300 hover:border-blue-500/50 dark:hover:border-blue-400/50
+                                                peer-checked:border-blue-500 dark:peer-checked:border-blue-400
+                                                peer-checked:bg-blue-50/50 dark:peer-checked:bg-blue-900/20">
+                                        <div class="flex items-center gap-3">
+                                            <div class="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg group-hover:scale-110 transition-transform">
+                                                <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-900 dark:text-white">Mobile Money</p>
+                                                <p class="text-sm text-gray-500 dark:text-gray-400">Pay via mobile money</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Mobile Money Providers (Hidden by default) -->
+                            <div id="mobileProviders" class="hidden space-y-4 animate-fadeIn">
+                                <p class="text-sm text-yellow-600 dark:text-yellow-500">
+                                    ⚠️ Complete payment within 15 minutes to secure your booking
+                                </p>
+                                <div class="grid grid-cols-2 gap-4">
+                                    ${this.renderPaymentMethods()}
+                                </div>
                             </div>
                         </div>
-                    </form>
+                    </div>
+
+                    <!-- Footer Buttons -->
+                    <div class="mt-8 flex justify-end gap-4">
+                        <button id="cancelCheckout" 
+                            class="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+                            Cancel
+                        </button>
+                        <button id="completeReservation" 
+                            class="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg
+                            hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800
+                            transition-all duration-300 ease-in-out transform hover:scale-[1.02] 
+                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                            shadow-sm hover:shadow-md
+                            disabled:opacity-50 disabled:cursor-not-allowed
+                            flex items-center justify-center gap-2">
+                            <span>Complete Reservation</span>
+                            <svg class="w-5 h-5 animate-spin hidden" id="submitSpinner" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" 
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
-
-            <!-- Footer Buttons -->
-            <div class="mt-8 flex justify-end gap-4">
-                <button id="cancelCheckout" 
-                    class="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200">
-                    Cancel
-                </button>
-                <button id="completeReservation" 
-                    class="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg
-                    hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800
-                    transition-all duration-300 ease-in-out transform hover:scale-[1.02] 
-                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                    shadow-sm hover:shadow-md
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                    flex items-center justify-center gap-2">
-                    <span>Complete Reservation</span>
-                    <svg class="w-5 h-5 animate-spin hidden" id="submitSpinner" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" 
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                        </path>
-                    </svg>
-                </button>
-            </div>
         </div>
-    </div>
-</div>
-        `;
+    `;
 
     $("body").append(modalHtml);
+
+    if (isMobile) {
+        const modal = document.getElementById('checkoutModal');
+        const modalContent = modal.querySelector('.bg-white');
+        let startY;
+        let currentY;
+
+        modalContent.addEventListener('touchstart', (e) => {
+            startY = e.touches[0].clientY;
+        });
+
+        modalContent.addEventListener('touchmove', (e) => {
+            currentY = e.touches[0].clientY;
+            const diff = currentY - startY;
+            if (diff > 0) {
+                modalContent.style.transform = `translateY(${diff}px)`;
+            }
+        });
+
+        modalContent.addEventListener('touchend', (e) => {
+            if (currentY - startY > 150) {
+                this.closeCheckoutModal();
+            } else {
+                modalContent.style.transform = '';
+            }
+        });
+    }
 
     // Setup modal event listeners
     $("#closeCheckoutModal, #cancelCheckout").on("click", () =>
@@ -424,6 +567,59 @@ const BoothManager = {
             $(this).remove();
           });
       }
+    });
+
+    this.setupPaymentListeners();
+  },
+
+  setupPaymentListeners() {
+    $('.payment-method-btn').on('click', function() {
+      $('.payment-method-btn').removeClass('border-blue-500 dark:border-blue-400')
+                            .addClass('border-gray-200 dark:border-gray-700');
+      $(this).removeClass('border-gray-200 dark:border-gray-700')
+             .addClass('border-blue-500 dark:border-blue-400');
+
+      const paymentType = $(this).data('payment');
+      $('#mobilePaymentDetails').toggleClass('hidden', paymentType !== 'mobile');
+    });
+
+    $('.mobile-provider-btn').on('click', function() {
+      $('.mobile-provider-btn').removeClass('border-blue-500 dark:border-blue-400')
+                              .addClass('border-gray-200 dark:border-gray-700');
+      $(this).removeClass('border-gray-200 dark:border-gray-700')
+             .addClass('border-blue-500 dark:border-blue-400');
+
+      BoothManager.state.selectedPaymentMethod = {
+        provider: $(this).data('provider'),
+        number: $(this).find('p:last').text()
+      };
+    });
+
+    // Copy number functionality
+    $(document).on('click', '.copy-number', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const $button = $(this);
+        const number = $button.data('number');
+        const $feedback = $button.find('.copy-feedback');
+        
+        navigator.clipboard.writeText(number)
+            .then(() => {
+                $feedback.css('opacity', '1');
+                setTimeout(() => {
+                    $feedback.css('opacity', '0');
+                }, 1500);
+            })
+            .catch(() => {
+                $feedback.text('Failed to copy').css('opacity', '1');
+                setTimeout(() => {
+                    $feedback.css('opacity', '0');
+                    setTimeout(() => {
+                        $feedback.text('Copied!');
+                    }, 200);
+                }, 1500);
+            });
     });
   },
 
@@ -621,4 +817,60 @@ const BoothManager = {
       )
     );
   },
+
+  renderPaymentMethods() {
+    if (!Array.isArray(this.state.paymentMethods) || this.state.paymentMethods.length === 0) {
+        return '<p class="text-gray-500 dark:text-gray-400">No payment methods available</p>';
+    }
+
+    return this.state.paymentMethods.map(method => `
+        <div class="payment-method-card group cursor-pointer"
+             data-method-id="${method.id}"
+             onclick="BoothManager.selectPaymentMethod('${method.id}')">
+            <div class="relative p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700
+                        hover:border-blue-500/50 dark:hover:border-blue-400/50
+                        hover:shadow-lg hover:-translate-y-0.5
+                        transition-all duration-300 ease-out">
+                
+                <!-- Selection Indicator -->
+                <div class="absolute top-3 right-3 opacity-0 scale-0 group-data-[selected=true]:opacity-100 
+                            group-data-[selected=true]:scale-100 transition-all duration-300">
+                    <div class="w-6 h-6 rounded-full bg-blue-500 dark:bg-blue-400 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <!-- Provider Details -->
+                    <div class="flex-1">
+                        <p class="font-medium text-gray-900 dark:text-white mb-1">${method.name}</p>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-gray-500 dark:text-gray-400">${method.number}</span>
+                            <button class="copy-btn p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700
+                                         focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400
+                                         transition-all duration-200"
+                                    data-number="${method.number}"
+                                    onclick="event.stopPropagation()"
+                                    title="Copy number">
+                                <svg class="w-4 h-4 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 
+                                          transition-colors duration-200" 
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                                <span class="copy-feedback absolute -bottom-8 left-1/2 transform -translate-x-1/2
+                                           px-2 py-1 bg-black/75 text-white text-xs rounded
+                                           opacity-0 transition-opacity duration-200">
+                                    Copied!
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+},
 };

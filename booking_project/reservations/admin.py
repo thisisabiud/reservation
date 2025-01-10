@@ -5,7 +5,21 @@ from django.urls import reverse
 from reservations.models import Booking, Contact, Booth, Event
 from reservations.models.choices import BoothStatus
 from reservations.models.contact import Exhibitor
+from reservations.models.event import PaymentMethod
 
+
+@admin.register(PaymentMethod)
+class PaymentMethodsAdmin(admin.ModelAdmin):
+    list_display = ('name', 'number', 'created_at')
+    list_filter = ('created_at', 'event')
+    search_fields = ('name', 'number')
+    readonly_fields = ('created_at', 'updated_at')
+    date_hierarchy = 'created_at'
+
+class PaymentMethodInline(admin.TabularInline):
+    model = PaymentMethod
+    extra = 1
+    
 @admin.register(Contact)
 class ContactAdmin(admin.ModelAdmin):
     list_display = ('company', 'contact', 'email', 'phone', 'created_at', 'total_bookings')
@@ -26,8 +40,8 @@ class BookingInline(admin.TabularInline):
 
 class BoothInline(admin.TabularInline):
     model = Booth
-    extra = 3
-    fields = ('booth_number', 'booth_type', 'status', 'price')
+    extra = 1
+    fields = ('booth_number', 'booth_type', 'status')
     #raw_id_fields = ('reserved_by',)
     show_change_link = True
 
@@ -86,12 +100,15 @@ class EventAdmin(admin.ModelAdmin):
     list_filter = ('is_active', 'start_date', 'location')
     search_fields = ('title', 'description', 'location')
     readonly_fields = ('created_at', 'updated_at')
-    inlines = [BoothInline]
+    inlines = [PaymentMethodInline,BoothInline]
     date_hierarchy = 'start_date'
     
     fieldsets = (
         (None, {
             'fields': ('title', 'description', 'image', 'floor_plan_standard', 'floor_plan_premium')
+        }),
+        ('Booth Details', {
+            'fields': ('standard_price', 'premium_price')
         }),
         ('Event Details', {
             'fields': ('start_date', 'end_date', 'location', 'is_active')

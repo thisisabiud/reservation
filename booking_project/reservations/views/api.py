@@ -12,15 +12,11 @@ from reservations.models.contact import Exhibitor
 from reservations.serializers import BoothSerializer, ContactSerializer, BookingSerializer, EventSerializer
 
 
-class EventSearchAPIView(APIView):
+class EventAPIView(APIView):
     def get(self, request, *args, **kwargs):
-        query = request.query_params.get('q', '')
-        events = Event.objects.filter(
-            Q(title__icontains=query) |
-            Q(description__icontains=query) |
-            Q(location__icontains=query)
-        )
-        serializer = EventSerializer(events, many=True)
+        event_id = kwargs.get('event_id')
+        event = get_object_or_404(Event, id=event_id)
+        serializer = EventSerializer(event)
         return Response(serializer.data)
 
 class BookingAPIView(APIView):

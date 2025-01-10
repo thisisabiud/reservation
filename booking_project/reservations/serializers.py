@@ -1,24 +1,28 @@
 from rest_framework import serializers
 from django.utils import timezone
 from django.db import transaction
+
+from reservations.models.event import PaymentMethod
 from .models import Booth, Contact, Booking, Event
 from .models.choices import BoothStatus
 
+
+class PaymentMethodSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentMethod
+        fields = ['id', 'name', 'number']
+        read_only_fields = ['id']
+
 class EventSerializer(serializers.ModelSerializer):
-    is_ongoing = serializers.ReadOnlyField()
-    available_booths = serializers.SerializerMethodField()
+    payment_methods = PaymentMethodSerializer(many=True)
 
     class Meta:
         model = Event
         fields = [
-            'id', 'title', 'description', 'start_date', 'end_date',
-            'location', 'is_active', 'image', 'created_at', 'updated_at',
-            'is_ongoing', 'available_booths'
+            'id', 'title', 'payment_methods'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'is_ongoing', 'available_booths']
+        read_only_fields = ['id', 'title', 'payment_methods']
 
-    def get_available_booths(self, obj):
-        return obj.available_booths().count()
 
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
