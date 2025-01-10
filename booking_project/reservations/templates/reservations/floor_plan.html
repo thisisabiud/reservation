@@ -71,20 +71,47 @@
     <div class="container mx-auto px-4 py-6">
         <!-- Floor Plan Modal -->
         <div id="floorPlanContainer" 
-             class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-all duration-300"
+             class="hidden fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-50 transition-all duration-300"
              data-standard-plan="{{ event.floor_plan_standard.url }}"
              data-premium-plan="{{ event.floor_plan_premium.url }}">
             <div class="container mx-auto px-4 py-8 h-full flex items-center justify-center">
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden">
-                    <div class="p-6 relative">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden transition-colors duration-300">
+                    <!-- Modal Header -->
+                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Floor Plan View</h3>
                         <button onclick="document.getElementById('floorPlanContainer').classList.add('hidden')"
-                                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                                class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all duration-200">
                             <i class="bi bi-x-lg"></i>
                         </button>
-                        <div id="floorPlanImage">
-                            <img src="{{ event.floor_plan_standard.url }}" 
-                                 alt="Floor Plan"
-                                 class="w-full h-auto rounded-lg">
+                    </div>
+
+                    <!-- Controls Toolbar -->
+                    <div class="px-6 py-2 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 flex items-center gap-4">
+                        <div class="flex items-center gap-2">
+                            <button id="zoomIn" class="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-600">
+                                <i class="bi bi-zoom-in"></i>
+                            </button>
+                            <button id="zoomOut" class="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-600">
+                                <i class="bi bi-zoom-out"></i>
+                            </button>
+                            <button id="resetZoom" class="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-600">
+                                <i class="bi bi-arrows-angle-contract"></i>
+                            </button>
+                        </div>
+                        <button id="toggleFullscreen" class="ml-auto p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-600">
+                            <i class="bi bi-arrows-fullscreen"></i>
+                        </button>
+                    </div>
+
+                    <!-- Image Container -->
+                    <div class="relative p-6">
+                        <div id="floorPlanImage" class="overflow-hidden rounded-lg cursor-move">
+                            <div id="floorPlanZoomContainer" class="transform-gpu transition-transform duration-200">
+                                <img src="{{ event.floor_plan_standard.url }}" 
+                                     alt="Floor Plan"
+                                     class="w-full h-auto rounded-lg transition-opacity duration-300"
+                                     loading="lazy">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -169,6 +196,7 @@
 {{ block.super }}
 <script src="{% static 'js/boothman.js' %}"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script src="{% static 'js/floor_plan.js' %}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const params = new URLSearchParams(window.location.search);
