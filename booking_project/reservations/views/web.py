@@ -19,9 +19,10 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 def events_list(request):
     events = Event.objects.order_by('-start_date')
-    paginator = Paginator(events, 3) 
+    per_page = 3  # Increased items per page for grid layout
+    paginator = Paginator(events, per_page)
 
-    page = request.GET.get('page')
+    page = request.GET.get('page', 1)
     try:
         events_page = paginator.page(page)
     except PageNotAnInteger:
@@ -29,7 +30,22 @@ def events_list(request):
     except EmptyPage:
         events_page = paginator.page(paginator.num_pages)
 
-    context = {'events': events_page}
+    # Add pagination info
+    pagination_info = {
+        'has_other_pages': events_page.has_other_pages(),
+        'current_page': events_page.number,
+        'total_pages': paginator.num_pages,
+        'page_range': paginator.page_range,
+        'has_previous': events_page.has_previous(),
+        'has_next': events_page.has_next(),
+        'previous_page': events_page.previous_page_number() if events_page.has_previous() else None,
+        'next_page': events_page.next_page_number() if events_page.has_next() else None,
+    }
+
+    context = {
+        'events': events_page,
+        'pagination': pagination_info
+    }
     return render(request, 'reservations/events_list.html', context)
 
 # @cache_page(60 * 15)

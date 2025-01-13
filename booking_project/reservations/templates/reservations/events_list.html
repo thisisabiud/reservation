@@ -60,6 +60,53 @@
                 </div>
                 {% endfor %}
             </div>
+            <div class="mt-12">
+                {% if pagination.has_other_pages %}
+                <div class="flex flex-col items-center space-y-4">
+                    <!-- Page Info -->
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                        Page {{ pagination.current_page }} of {{ pagination.total_pages }}
+                    </p>
+                    
+                    <!-- Navigation -->
+                    <nav class="flex items-center justify-center space-x-2" aria-label="Pagination">
+                        <!-- Previous -->
+                        {% if pagination.has_previous %}
+                        <a href="?page={{ pagination.previous_page }}" 
+                           class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
+                            <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        {% endif %}
+
+                        <!-- Page Numbers -->
+                        {% for num in pagination.page_range %}
+                            {% if pagination.current_page == num %}
+                            <span class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md shadow-sm">
+                                {{ num }}
+                            </span>
+                            {% elif num > pagination.current_page|add:"-3" and num < pagination.current_page|add:"3" %}
+                            <a href="?page={{ num }}" 
+                               class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
+                                {{ num }}
+                            </a>
+                            {% endif %}
+                        {% endfor %}
+
+                        <!-- Next -->
+                        {% if pagination.has_next %}
+                        <a href="?page={{ pagination.next_page }}" 
+                           class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
+                            <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>

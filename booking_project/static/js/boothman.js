@@ -6,118 +6,118 @@ const BoothManager = {
     eventId: null,
     selectedIds: new Set(),
     paymentMethods: [], // Initialize as empty array
-    selectedPaymentMethod: null
+    selectedPaymentMethod: null,
   },
 
-  async init(eventId, boothType = 'all') {
-    console.log('Initializing BoothManager:', { eventId, boothType });
+  async init(eventId, boothType = "all") {
+    console.log("Initializing BoothManager:", { eventId, boothType });
     this.state.eventId = eventId;
     await Promise.all([
       this.fetchBooths(boothType),
-      this.fetchPaymentMethods()
+      this.fetchPaymentMethods(),
     ]);
     this.setupEventListeners();
   },
 
-  async fetchBooths(boothType = 'all') {
+  async fetchBooths(boothType = "all") {
     try {
-        // Update URL with new booth type
-        const url = new URL(window.location.href);
-        url.searchParams.set('booth_type', boothType);
-        window.history.pushState({}, '', url);
+      // Update URL with new booth type
+      const url = new URL(window.location.href);
+      url.searchParams.set("booth_type", boothType);
+      window.history.pushState({}, "", url);
 
-        // Update floor plan
-        this.updateFloorPlan(boothType);
+      // Update floor plan
+      this.updateFloorPlan(boothType);
 
-        // Fetch booths
-        const apiUrl = new URL('/api/booths', window.location.origin);
-        apiUrl.searchParams.append('event_id', this.state.eventId);
-        apiUrl.searchParams.append('booth_type', boothType);
+      // Fetch booths
+      const apiUrl = new URL("/api/booths", window.location.origin);
+      apiUrl.searchParams.append("event_id", this.state.eventId);
+      apiUrl.searchParams.append("booth_type", boothType);
 
-        const response = await fetch(apiUrl);
-        const boothsData = await response.json();
+      const response = await fetch(apiUrl);
+      const boothsData = await response.json();
 
-        console.log('Fetched booth data:', boothsData);
+      console.log("Fetched booth data:", boothsData);
 
-        if (!response.ok) {
-          throw new Error(boothsData.error || 'Failed to fetch booths');
-        }
+      if (!response.ok) {
+        throw new Error(boothsData.error || "Failed to fetch booths");
+      }
 
-        // Clear and update booths collection
-        this.state.booths.clear();
-        boothsData.forEach((booth) => {
-          console.log('Adding booth:', booth);
-          this.state.booths.set(booth.booth_number, booth);
-        });
+      // Clear and update booths collection
+      this.state.booths.clear();
+      boothsData.forEach((booth) => {
+        console.log("Adding booth:", booth);
+        this.state.booths.set(booth.booth_number, booth);
+      });
 
-        // Render the fetched booths
-        this.renderBooths();
-        Swal.close();
-        return boothsData;
-
+      // Render the fetched booths
+      this.renderBooths();
+      Swal.close();
+      return boothsData;
     } catch (error) {
-        console.error("Error fetching booths:", error);
-        Swal.fire({
-          title: "Error",
-          text: error.message,
-          icon: "error"
-        });
-        return [];
+      console.error("Error fetching booths:", error);
+      Swal.fire({
+        title: "Error",
+        text: error.message,
+        icon: "error",
+      });
+      return [];
     }
   },
 
   async fetchPaymentMethods() {
     try {
-        const response = await fetch(`/api/events/${this.state.eventId}/`);
-        if (!response.ok) throw new Error('Failed to fetch payment methods');
-        
-        const data = await response.json();
-        console.log('Fetched event data:', data);
-        
-        // Extract payment_methods array from response
-        if (data.payment_methods && Array.isArray(data.payment_methods)) {
-            this.state.paymentMethods = data.payment_methods;
-            console.log('Updated payment methods:', this.state.paymentMethods);
-        } else {
-            console.warn('No payment methods found in response');
-            this.state.paymentMethods = [];
-        }
-    } catch (error) {
-        console.error('Error fetching payment methods:', error);
+      const response = await fetch(`/api/events/${this.state.eventId}/`);
+      if (!response.ok) throw new Error("Failed to fetch payment methods");
+
+      const data = await response.json();
+      console.log("Fetched event data:", data);
+
+      // Extract payment_methods array from response
+      if (data.payment_methods && Array.isArray(data.payment_methods)) {
+        this.state.paymentMethods = data.payment_methods;
+        console.log("Updated payment methods:", this.state.paymentMethods);
+      } else {
+        console.warn("No payment methods found in response");
         this.state.paymentMethods = [];
+      }
+    } catch (error) {
+      console.error("Error fetching payment methods:", error);
+      this.state.paymentMethods = [];
     }
-},
+  },
 
   updateFloorPlan(boothType) {
-    const container = document.getElementById('floorPlanContainer');
-    const imageContainer = container.querySelector('img') || container.querySelector('.flex');
-    
-    if (boothType === 'premium' && container.dataset.premiumPlan) {
-        imageContainer.outerHTML = `
+    const container = document.getElementById("floorPlanContainer");
+    const imageContainer =
+      container.querySelector("img") || container.querySelector(".flex");
+
+    if (boothType === "premium" && container.dataset.premiumPlan) {
+      imageContainer.outerHTML = `
             <img src="${container.dataset.premiumPlan}" 
                  alt="Premium Floor Plan"
                  class="w-full h-auto rounded-lg">
         `;
-    } else if (boothType === 'standard' && container.dataset.standardPlan) {
-        imageContainer.outerHTML = `
+    } else if (boothType === "standard" && container.dataset.standardPlan) {
+      imageContainer.outerHTML = `
             <img src="${container.dataset.standardPlan}" 
                  alt="Standard Floor Plan"
                  class="w-full h-auto rounded-lg">
         `;
     } else {
-        imageContainer.outerHTML = `
+      imageContainer.outerHTML = `
             <div class="flex items-center justify-center h-48 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <p class="text-gray-500 dark:text-gray-400">No floor plan available for ${boothType} booths</p>
             </div>
         `;
     }
-},
+  },
 
   renderBooths() {
-    console.log('Rendering booths, total:', this.state.booths.size);
+    console.log("Rendering booths, total:", this.state.booths.size);
     const $floorContainer = $(".floor-container");
     if (!$floorContainer.length) {
-      console.error('Floor container not found');
+      console.error("Floor container not found");
       return;
     }
 
@@ -133,11 +133,11 @@ const BoothManager = {
       boothsByRow.get(row).push(booth);
     });
 
-    console.log('Booths by row:', [...boothsByRow.entries()]);
+    console.log("Booths by row:", [...boothsByRow.entries()]);
 
     boothsByRow.forEach((booths, row) => {
       const $rowDiv = $("<div>", {
-        class: "flex flex-wrap justify-center mb-4"
+        class: "flex flex-wrap justify-center mb-4",
       });
 
       booths.forEach((booth) => {
@@ -154,7 +154,7 @@ const BoothManager = {
     $("#checkoutButton").prop("disabled", !this.state.selectedBooths.size);
 
     const boothStyles = {
-        available: `
+      available: `
             bg-white dark:bg-gray-800
             hover:bg-gradient-to-br hover:from-indigo-50/80 hover:to-blue-50/80
             dark:hover:from-indigo-900/30 dark:hover:to-blue-900/30
@@ -166,20 +166,20 @@ const BoothManager = {
             shadow-lg hover:shadow-xl hover:shadow-blue-100 dark:hover:shadow-blue-900/30
             hover:ring-2 hover:ring-blue-200 dark:hover:ring-blue-700 hover:ring-opacity-50
         `,
-        reserved: `
+      reserved: `
             bg-gray-100 dark:bg-gray-700
             border-2 border-gray-300 dark:border-gray-600
             cursor-not-allowed
             opacity-75
             grayscale
         `,
-        processing: `
+      processing: `
             bg-gradient-to-br from-yellow-50 to-yellow-100
             dark:from-yellow-900/30 dark:to-yellow-800/30
             border-2 border-yellow-400 dark:border-yellow-500
             animate-pulse
         `,
-        selected: `
+      selected: `
             bg-blue-200 dark:bg-blue-600
             border-2 border-blue-400 dark:border-blue-500
             transform scale-110 -translate-y-1
@@ -191,11 +191,11 @@ const BoothManager = {
             hover:ring-blue-400 dark:hover:ring-blue-500
             text-gray-900 dark:text-white
             cursor-pointer
-        `
+        `,
     };
 
     const $div = $("<div>", {
-        class: `
+      class: `
             booth 
             w-[120px] h-[120px] 
             m-[10px] 
@@ -211,9 +211,9 @@ const BoothManager = {
             backdrop-blur-[5px]
             ${boothStyles[booth.status]}
         `,
-        "data-booth": booth.booth_number,
-        "data-price": booth.price,
-        "data-id": booth.id,
+      "data-booth": booth.booth_number,
+      "data-price": booth.price,
+      "data-id": booth.id,
     });
 
     let boothContent = `
@@ -224,17 +224,17 @@ const BoothManager = {
             ${booth.booth_number}
         </span>
         <span class="absolute bottom-2 text-sm font-medium ${
-            booth.status === 'reserved' 
-            ? 'text-red-500 dark:text-red-400' 
-            : 'text-blue-600 dark:text-blue-400'
+          booth.status === "reserved"
+            ? "text-red-500 dark:text-red-400"
+            : "text-blue-600 dark:text-blue-400"
         }">
-            ${booth.status === 'reserved' ? 'Reserved' : `TZS ${booth.price}`}
+            ${booth.status === "reserved" ? "Reserved" : `TZS ${booth.price}`}
         </span>
     `;
 
     $div.html(boothContent);
     return $div;
-},
+  },
 
   // Format booth type with proper capitalization
   formatBoothType(type) {
@@ -249,17 +249,20 @@ const BoothManager = {
       const $boothElement = $(e.currentTarget);
       const boothId = $boothElement.data("booth");
       const boothData = this.state.booths.get(boothId);
-      
-      if (boothData.status === "reserved" || boothData.status === "processing") {
-          return;
+
+      if (
+        boothData.status === "reserved" ||
+        boothData.status === "processing"
+      ) {
+        return;
       }
 
       if (this.state.selectedBooths.has(boothId)) {
-          this.state.selectedBooths.delete(boothId);
-          boothData.status = 'available';
+        this.state.selectedBooths.delete(boothId);
+        boothData.status = "available";
       } else {
-          this.state.selectedBooths.add(boothId);
-          boothData.status = 'selected';
+        this.state.selectedBooths.add(boothId);
+        boothData.status = "selected";
       }
 
       this.renderBooths();
@@ -267,10 +270,13 @@ const BoothManager = {
     });
 
     // Add payment type change listener
-    $(document).on('change', 'input[name="payment_type"]', function() {
-      const isMobile = $(this).val() === 'mobile';
-      $('#mobileProviders').toggleClass('hidden', !isMobile);
-      console.log('Payment type changed:', { isMobile, methods: BoothManager.state.paymentMethods });
+    $(document).on("change", 'input[name="payment_type"]', function () {
+      const isMobile = $(this).val() === "mobile";
+      $("#mobileProviders").toggleClass("hidden", !isMobile);
+      console.log("Payment type changed:", {
+        isMobile,
+        methods: BoothManager.state.paymentMethods,
+      });
     });
   },
 
@@ -279,21 +285,33 @@ const BoothManager = {
     const isMobile = window.innerWidth < 1024;
     const modalHtml = `
         <div id="checkoutModal" class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-50 
-                    flex ${isMobile ? 'items-end' : 'items-center'} justify-center">
+                    flex ${
+                      isMobile ? "items-end" : "items-center"
+                    } justify-center">
             <div class="bg-white dark:bg-gray-800 
-                        ${isMobile ? 'w-full rounded-t-2xl max-h-[90vh]' : 'rounded-2xl w-11/12 max-w-4xl max-h-[90vh]'}
+                        ${
+                          isMobile
+                            ? "w-full rounded-t-2xl max-h-[90vh]"
+                            : "rounded-2xl w-11/12 max-w-4xl max-h-[90vh]"
+                        }
                         shadow-2xl overflow-y-auto transform transition-all duration-300 ease-out
-                        ${isMobile ? 'translate-y-0' : 'scale-100'}">
+                        ${isMobile ? "translate-y-0" : "scale-100"}">
                 
-                ${isMobile ? `
+                ${
+                  isMobile
+                    ? `
                     <!-- Mobile Drag Handle -->
                     <div class="sticky top-0 bg-white dark:bg-gray-800 pt-4 pb-2 px-6 flex justify-center">
                         <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
                     </div>
-                ` : ''}
+                `
+                    : ""
+                }
 
                 <!-- Modal Header -->
-                <div class="sticky top-${isMobile ? '10' : '0'} bg-white dark:bg-gray-800 
+                <div class="sticky top-${
+                  isMobile ? "10" : "0"
+                } bg-white dark:bg-gray-800 
                             border-b border-gray-200 dark:border-gray-700 px-6 py-4 
                             flex justify-between items-center z-10">
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Complete Your Reservation</h2>
@@ -308,31 +326,29 @@ const BoothManager = {
                 <div class="p-6">
                     <div class="grid md:grid-cols-2 gap-8">
                         <!-- Selected Booths Section -->
-                        <div>
-                            <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                                <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                                    </svg>
-                                    Selected Booths
-                                </h3>
-                                <div id="checkoutSelectedBooths" class="space-y-3">
-                                    <!-- Dynamically populated booths -->
-                                </div>
-                            </div>
+                        <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
+    <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
+        Selected Booths
+    </h3>
+    <div id="checkoutSelectedBooths" class="space-y-3">
+        <!-- Booths will be populated here -->
+    </div>
 
-                            <div class="bg-blue-50 rounded-lg p-4">
-                                <div class="flex justify-between mb-2">
-                                    <span class="text-gray-700">Number of Booths:</span>
-                                    <span id="summaryBoothCount" class="font-semibold">0</span>
-                                </div>
-                                <div class="flex justify-between items-center pt-2 border-t border-blue-100">
-                                    <span class="font-semibold text-gray-900">Total Amount:</span>
-                                    <span id="summaryTotal" class="text-lg font-bold text-blue-600">TZS 0</span>
-                                </div>
-                            </div>
-                        </div>
+    <!-- Summary Box -->
+    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div class="flex justify-between mb-2">
+            <span class="text-gray-600 dark:text-gray-400">Number of Booths:</span>
+            <span id="summaryBoothCount" class="font-semibold text-gray-900 dark:text-white">0</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="font-semibold text-gray-900 dark:text-white">Total Amount:</span>
+            <span id="summaryTotal" class="text-lg font-bold text-blue-600 dark:text-blue-400">TZS 0</span>
+        </div>
+    </div>
+</div>
 
                         <!-- Contact Information Form -->
                         <div>
@@ -342,73 +358,93 @@ const BoothManager = {
                                }">
                                 
                                 <div class="space-y-4">
-                                    <h3 class="text-lg font-semibold flex items-center gap-2">
-                                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                        </svg>
-                                        Contact Information
-                                    </h3>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+        Contact Information
+    </h3>
 
-                                    <div class="form-group">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-                                        <input type="text" name="company" required 
-                                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
+                                 <div class="form-group">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company Name</label>
+        <input type="text" name="company" required 
+            class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 
+                   border border-gray-300 dark:border-gray-600 
+                   text-gray-900 dark:text-white 
+                   placeholder-gray-500 dark:placeholder-gray-400
+                   rounded-lg focus:outline-none focus:ring-2 
+                   focus:ring-blue-500 dark:focus:ring-blue-400
+                   focus:border-transparent transition-colors">
+    </div>
 
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div class="form-group">
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
-                                            <input type="text" name="contact" required 
-                                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                                            <input type="tel" name="phone" required 
-                                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        </div>
-                                    </div>
+                                        <div class="grid grid-cols-2 gap-4">
+        <div class="form-group">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contact Person</label>
+            <input type="text" name="contact" required 
+                class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 
+                       border border-gray-300 dark:border-gray-600 
+                       text-gray-900 dark:text-white 
+                       placeholder-gray-500 dark:placeholder-gray-400
+                       rounded-lg focus:outline-none focus:ring-2 
+                       focus:ring-blue-500 dark:focus:ring-blue-400
+                       focus:border-transparent transition-colors">
+        </div>
+        <div class="form-group">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone Number</label>
+            <input type="tel" name="phone" required 
+                class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 
+                       border border-gray-300 dark:border-gray-600 
+                       text-gray-900 dark:text-white 
+                       placeholder-gray-500 dark:placeholder-gray-400
+                       rounded-lg focus:outline-none focus:ring-2 
+                       focus:ring-blue-500 dark:focus:ring-blue-400
+                       focus:border-transparent transition-colors">
+        </div>
+    </div>
 
-                                    <div class="form-group">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                                        <input type="email" name="email" required 
-                                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
-
-                                    <!-- Exhibitors Section -->
-                                    <div class="mt-6">
-                                        <label class="block text-sm font-medium text-gray-700 mb-3">Exhibitors</label>
-                                        <div id="exhibitorsContainer" class="space-y-3">
-                                            <div class="exhibitor-field flex items-center gap-2 group">
-                                                <input type="text" 
-                                                    name="exhibitors[]" 
-                                                    placeholder="Exhibitor name"
-                                                    required 
-                                                    class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200">
-                                                <button type="button" 
-                                                    class="remove-exhibitor p-2 text-gray-400 hover:text-red-500 rounded-lg opacity-50 group-hover:opacity-100 transition-all duration-200"
-                                                    style="display: none;">
-                                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <button type="button" 
-                                            id="addExhibitor"
-                                            class="mt-4 px-5 py-2.5 text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg 
-                                            hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800
-                                            transition-all duration-300 ease-in-out transform hover:scale-[1.02] 
-                                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                                            shadow-sm hover:shadow-md
-                                            flex items-center justify-center gap-3">
-                                            <svg class="w-4 h-4 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                                            </svg>
-                                            <span>Add Exhibitor</span>
-                                        </button>
-                                    </div>
+                                <div class="form-group">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+        <input type="email" name="email" required 
+            class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 
+                   border border-gray-300 dark:border-gray-600 
+                   text-gray-900 dark:text-white 
+                   placeholder-gray-500 dark:placeholder-gray-400
+                   rounded-lg focus:outline-none focus:ring-2 
+                   focus:ring-blue-500 dark:focus:ring-blue-400
+                   focus:border-transparent transition-colors">
+    </div>
+<!-- Exhibitors -->
+<div class="mt-6">
+    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Exhibitors</label>
+    <div id="exhibitorsContainer" class="space-y-3">
+        <!-- First field without delete -->
+        <div class="exhibitor-field flex items-center gap-2">
+            <input type="text" 
+                name="exhibitors[]" 
+                placeholder="Exhibitor"
+                required 
+                class="flex-1 px-4 py-2.5 bg-white dark:bg-gray-800 
+                       border border-gray-300 dark:border-gray-600 
+                       text-gray-900 dark:text-white 
+                       placeholder-gray-500 dark:placeholder-gray-400
+                       rounded-lg focus:outline-none focus:ring-2 
+                       focus:ring-blue-500 dark:focus:ring-blue-400
+                       focus:border-transparent transition-all duration-200">
+        </div>
+    </div>
+    
+    <button type="button" 
+        id="addExhibitor"
+        class="mt-4 px-5 py-2.5 text-sm font-medium text-blue-600 dark:text-blue-400
+               hover:text-blue-700 dark:hover:text-blue-300
+               flex items-center gap-2 transition-colors duration-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Add Exhibitor
+    </button>
+</div>
                                 </div>
                             </form>
                         </div>
@@ -511,30 +547,30 @@ const BoothManager = {
     $("body").append(modalHtml);
 
     if (isMobile) {
-        const modal = document.getElementById('checkoutModal');
-        const modalContent = modal.querySelector('.bg-white');
-        let startY;
-        let currentY;
+      const modal = document.getElementById("checkoutModal");
+      const modalContent = modal.querySelector(".bg-white");
+      let startY;
+      let currentY;
 
-        modalContent.addEventListener('touchstart', (e) => {
-            startY = e.touches[0].clientY;
-        });
+      modalContent.addEventListener("touchstart", (e) => {
+        startY = e.touches[0].clientY;
+      });
 
-        modalContent.addEventListener('touchmove', (e) => {
-            currentY = e.touches[0].clientY;
-            const diff = currentY - startY;
-            if (diff > 0) {
-                modalContent.style.transform = `translateY(${diff}px)`;
-            }
-        });
+      modalContent.addEventListener("touchmove", (e) => {
+        currentY = e.touches[0].clientY;
+        const diff = currentY - startY;
+        if (diff > 0) {
+          modalContent.style.transform = `translateY(${diff}px)`;
+        }
+      });
 
-        modalContent.addEventListener('touchend', (e) => {
-            if (currentY - startY > 150) {
-                this.closeCheckoutModal();
-            } else {
-                modalContent.style.transform = '';
-            }
-        });
+      modalContent.addEventListener("touchend", (e) => {
+        if (currentY - startY > 150) {
+          this.closeCheckoutModal();
+        } else {
+          modalContent.style.transform = "";
+        }
+      });
     }
 
     // Setup modal event listeners
@@ -545,17 +581,11 @@ const BoothManager = {
 
     this.updateCheckoutSummary();
     // Exhibitor field handling
-    $("#addExhibitor").on("click", function () {
-      const newField = $("#exhibitorsContainer .exhibitor-field")
-        .first()
-        .clone();
-      newField.find("input").val("");
-      newField.find(".remove-exhibitor").css("display", "flex");
-
-      // Add fade-in animation
-      newField.hide();
-      $("#exhibitorsContainer").append(newField);
-      newField.fadeIn(300);
+    $(document).off('click', '#addExhibitor');
+    
+    // Setup single event handler for add exhibitor
+    $('#addExhibitor').on('click', () => {
+        this.addExhibitorField();
     });
 
     $("#exhibitorsContainer").on("click", ".remove-exhibitor", function () {
@@ -573,53 +603,61 @@ const BoothManager = {
   },
 
   setupPaymentListeners() {
-    $('.payment-method-btn').on('click', function() {
-      $('.payment-method-btn').removeClass('border-blue-500 dark:border-blue-400')
-                            .addClass('border-gray-200 dark:border-gray-700');
-      $(this).removeClass('border-gray-200 dark:border-gray-700')
-             .addClass('border-blue-500 dark:border-blue-400');
+    $(".payment-method-btn").on("click", function () {
+      $(".payment-method-btn")
+        .removeClass("border-blue-500 dark:border-blue-400")
+        .addClass("border-gray-200 dark:border-gray-700");
+      $(this)
+        .removeClass("border-gray-200 dark:border-gray-700")
+        .addClass("border-blue-500 dark:border-blue-400");
 
-      const paymentType = $(this).data('payment');
-      $('#mobilePaymentDetails').toggleClass('hidden', paymentType !== 'mobile');
+      const paymentType = $(this).data("payment");
+      $("#mobilePaymentDetails").toggleClass(
+        "hidden",
+        paymentType !== "mobile"
+      );
     });
 
-    $('.mobile-provider-btn').on('click', function() {
-      $('.mobile-provider-btn').removeClass('border-blue-500 dark:border-blue-400')
-                              .addClass('border-gray-200 dark:border-gray-700');
-      $(this).removeClass('border-gray-200 dark:border-gray-700')
-             .addClass('border-blue-500 dark:border-blue-400');
+    $(".mobile-provider-btn").on("click", function () {
+      $(".mobile-provider-btn")
+        .removeClass("border-blue-500 dark:border-blue-400")
+        .addClass("border-gray-200 dark:border-gray-700");
+      $(this)
+        .removeClass("border-gray-200 dark:border-gray-700")
+        .addClass("border-blue-500 dark:border-blue-400");
 
       BoothManager.state.selectedPaymentMethod = {
-        provider: $(this).data('provider'),
-        number: $(this).find('p:last').text()
+        provider: $(this).data("provider"),
+        number: $(this).find("p:last").text(),
       };
     });
 
     // Copy number functionality
-    $(document).on('click', '.copy-number', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const $button = $(this);
-        const number = $button.data('number');
-        const $feedback = $button.find('.copy-feedback');
-        
-        navigator.clipboard.writeText(number)
-            .then(() => {
-                $feedback.css('opacity', '1');
-                setTimeout(() => {
-                    $feedback.css('opacity', '0');
-                }, 1500);
-            })
-            .catch(() => {
-                $feedback.text('Failed to copy').css('opacity', '1');
-                setTimeout(() => {
-                    $feedback.css('opacity', '0');
-                    setTimeout(() => {
-                        $feedback.text('Copied!');
-                    }, 200);
-                }, 1500);
-            });
+    $(document).on("click", ".copy-number", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const $button = $(this);
+      const number = $button.data("number");
+      const $feedback = $button.find(".copy-feedback");
+
+      navigator.clipboard
+        .writeText(number)
+        .then(() => {
+          $feedback.css("opacity", "1");
+          setTimeout(() => {
+            $feedback.css("opacity", "0");
+          }, 1500);
+        })
+        .catch(() => {
+          $feedback.text("Failed to copy").css("opacity", "1");
+          setTimeout(() => {
+            $feedback.css("opacity", "0");
+            setTimeout(() => {
+              $feedback.text("Copied!");
+            }, 200);
+          }, 1500);
+        });
     });
   },
 
@@ -641,19 +679,22 @@ const BoothManager = {
         .map((boothId) => {
           const booth = this.state.booths.get(boothId);
           return `
-                <div class="flex justify-between items-center bg-gray-100 p-2 rounded">
-                    <div>
-                        <span class="font-bold">Booth ${
-                          booth.booth_number
-                        }</span>
-                        <span class="text-sm text-gray-600 ml-2">${this.formatBoothType(
-                          booth.booth_type
-                        )}</span>
-                    </div>
-                    <span class="text-blue-600">TZS ${parseFloat(
-                      booth.price
-                    ).toLocaleString()}</span>
-                </div>
+                <div class="flex justify-between items-center bg-gray-100 dark:bg-gray-800 
+            border border-gray-200 dark:border-gray-700
+            p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 
+            transition-colors duration-200">
+    <div>
+        <span class="font-bold text-gray-900 dark:text-white">
+            Booth ${booth.booth_number}
+        </span>
+        <span class="text-sm text-gray-600 dark:text-gray-400 ml-2">
+            ${this.formatBoothType(booth.booth_type)}
+        </span>
+    </div>
+    <span class="text-blue-600 dark:text-blue-400 font-medium">
+        TZS ${parseFloat(booth.price).toLocaleString()}
+    </span>
+</div>
             `;
         })
         .join("")
@@ -775,28 +816,30 @@ const BoothManager = {
     const $totalElement = $("#totalPrice");
 
     if (this.state.selectedBooths.size === 0) {
-        $listElement.html('<p class="text-gray-500 dark:text-gray-400">No booths selected</p>');
-        $totalElement.text("TZS 0");
-        return;
+      $listElement.html(
+        '<p class="text-gray-500 dark:text-gray-400">No booths selected</p>'
+      );
+      $totalElement.text("TZS 0");
+      return;
     }
 
     let html = '<div class="space-y-2">';
     let totalPrice = 0;
 
     this.state.selectedBooths.forEach((boothId) => {
-        const boothData = this.state.booths.get(boothId);
-        totalPrice += parseFloat(boothData.price);
+      const boothData = this.state.booths.get(boothId);
+      totalPrice += parseFloat(boothData.price);
 
-        html += `
+      html += `
             <div class="flex justify-between items-center bg-gray-100 dark:bg-gray-800 p-2 rounded transition-colors duration-200">
                 <div>
                     <strong class="text-gray-800 dark:text-gray-200">Booth ${boothId}</strong>
                     <small class="block text-gray-500 dark:text-gray-400">${this.formatBoothType(
-                        boothData.booth_type
+                      boothData.booth_type
                     )}</small>
                 </div>
                 <span class="text-blue-600 dark:text-blue-400 font-bold">TZS ${parseFloat(
-                    boothData.price
+                  boothData.price
                 ).toLocaleString()}</span>
             </div>
         `;
@@ -805,7 +848,7 @@ const BoothManager = {
     html += "</div>";
     $listElement.html(html);
     $totalElement.text(`TZS ${totalPrice.toLocaleString()}`);
-},
+  },
   // Utility method to get CSRF token
   getCSRFToken() {
     return (
@@ -819,11 +862,16 @@ const BoothManager = {
   },
 
   renderPaymentMethods() {
-    if (!Array.isArray(this.state.paymentMethods) || this.state.paymentMethods.length === 0) {
-        return '<p class="text-gray-500 dark:text-gray-400">No payment methods available</p>';
+    if (
+      !Array.isArray(this.state.paymentMethods) ||
+      this.state.paymentMethods.length === 0
+    ) {
+      return '<p class="text-gray-500 dark:text-gray-400">No payment methods available</p>';
     }
 
-    return this.state.paymentMethods.map(method => `
+    return this.state.paymentMethods
+      .map(
+        (method) => `
         <div class="payment-method-card group cursor-pointer"
              data-method-id="${method.id}"
              onclick="BoothManager.selectPaymentMethod('${method.id}')">
@@ -871,6 +919,41 @@ const BoothManager = {
                 </div>
             </div>
         </div>
-    `).join('');
+    `
+      )
+      .join("");
+  },
+
+  // Add method for adding new exhibitor fields
+  addExhibitorField() {
+    const currentFields = $("#exhibitorsContainer .exhibitor-field").length;
+    
+    const newField = `
+    <div class="exhibitor-field flex items-center gap-2 group animate-fadeIn">
+        <input type="text" 
+            name="exhibitors[]" 
+            placeholder="Exhibitor"
+            required 
+            class="flex-1 px-4 py-2.5 bg-white dark:bg-gray-800 
+                   border border-gray-300 dark:border-gray-600 
+                   text-gray-900 dark:text-white 
+                   placeholder-gray-500 dark:placeholder-gray-400
+                   rounded-lg focus:outline-none focus:ring-2 
+                   focus:ring-blue-500 dark:focus:ring-blue-400
+                   focus:border-transparent transition-all duration-200">
+        <button type="button" 
+            class="remove-exhibitor p-2 text-gray-400 dark:text-gray-500 
+                   hover:text-red-500 dark:hover:text-red-400 
+                   rounded-lg opacity-100
+                   transition-all duration-200 flex items-center justify-center"
+            onclick="$(this).closest('.exhibitor-field').remove()">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+        </button>
+    </div>`;
+
+    $("#exhibitorsContainer").append(newField);
 },
 };
