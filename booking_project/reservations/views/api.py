@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from reservations.models.choices import BoothStatus
+from reservations.models.choices import BoothStatus, OrderStatus
 from rest_framework import viewsets, status
 from django.db.models import Q
 from rest_framework.response import Response
@@ -9,6 +9,7 @@ from django.db import transaction
 from django.utils import timezone
 from reservations.models import Booth, Contact, Booking, Event
 from reservations.models.contact import Exhibitor
+from reservations.models.order import Order, OrderItem
 from reservations.serializers import BoothSerializer, ContactSerializer, BookingSerializer, EventSerializer
 
 
@@ -21,13 +22,18 @@ class EventAPIView(APIView):
 
 class BookingAPIView(APIView):
     def post(self, request, *args, **kwargs):
+        if not request.session.session_key:
+            request.session.create()
+        session_key = request.session.session_key
+        
         event_id = request.query_params.get('event_id')
         if not event_id:
             return Response({"error": "event_id is required"}, status=status.HTTP_400_BAD_REQUEST)
         
         data = request.data
         selected_booths = data.get('booths')
-        exhibitors_data = data.get('exhibitors', [])  # Get exhibitors array from request
+        exhibitors_data = data.get('exhibitors', [])
+        payment_method = data.get('payment_method', 'cash')
         
         contact_data = {
             'company': data.get('company'),
@@ -53,45 +59,38 @@ class BookingAPIView(APIView):
                 id__in=selected_booths,
                 status=BoothStatus.AVAILABLE
             )
+            
             if booths.count() != len(selected_booths):
-                return Response({"error": "One or more booths are not available"}, status=status.HTTP_400_BAD_REQUEST)
-
-            # Create bookings
-            bookings = []
-            for booth in booths:
-                booth.status = BoothStatus.PROCESSING
-                booth.reserved_by = contact
-                booth.save()
-
-                booking = Booking(
-                    booth=booth,
-                    contact=contact,
-                    is_confirmed=False,
-                    confirmation_date=None
+                return Response(
+                    {"error": "One or more booths are not available"}, 
+                    status=status.HTTP_400_BAD_REQUEST
                 )
-                bookings.append(booking)
 
-            # Bulk create bookings
-            Booking.objects.bulk_create(bookings)
+            # Create order
+            
+            order = Order.objects.create(
+                contact=contact,
+                payment_method=payment_method,
+                session_key=session_key,
+                status=OrderStatus.PENDING
+            )
+            order.save()
 
-            # Create exhibitors
-            exhibitors = []
-            for exhibitor_name in exhibitors_data:
-                exhibitor = Exhibitor(
-                    company=contact,
-                    event_id=event_id,
-                    name=exhibitor_name
-                )
-                exhibitors.append(exhibitor)
+         # Create order items
+        for booth in booths:
+            # Join exhibitor names into a single string separated by commas
+            exhibitor_names = ", ".join(exhibitors_data)
+            OrderItem.objects.create(
+                order=order,
+                booth=booth,
+                price=booth.price,
+                exhibitor_names=exhibitor_names
+            )
+            booth.status = BoothStatus.PROCESSING
+            booth.save()
 
-            # Bulk create exhibitors if there are any
-            if exhibitors:
-                Exhibitor.objects.bulk_create(exhibitors)
-
-        redirection_url = f"/{event_id}/floor-plan"
         return Response({
-            "bookings": BookingSerializer(bookings, many=True).data,
-            "redirection_url": redirection_url
+            "message": "Reservation successful",
         }, status=status.HTTP_201_CREATED)
 
 class BoothViewSet(viewsets.ModelViewSet):

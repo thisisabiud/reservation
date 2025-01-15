@@ -6,6 +6,7 @@ from reservations.models import Booking, Contact, Booth, Event
 from reservations.models.choices import BoothStatus
 from reservations.models.contact import Exhibitor
 from reservations.models.event import PaymentMethod
+from reservations.models.order import Order, OrderItem
 
 
 @admin.register(PaymentMethod)
@@ -138,4 +139,26 @@ class ExhibitorAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
     date_hierarchy = 'created_at'
 
+
+
+@admin.register(OrderItem)
+class OrderItemAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    readonly_fields = ('order_number', 'session_key')
+    list_display = ('order_number', 'contact', 'status', 'payment_method', 'created_at')
+    search_fields = ('order_number', 'contact__company', 'contact__email')
+    list_filter = ('status', 'payment_method', 'created_at')
+
+    def has_add_permission(self, request):
+        return True  # Allow adding new orders
+
+    def get_fields(self, request, obj=None):
+        fields = super().get_fields(request, obj)
+        if obj is None:  # If adding new order
+            # Remove readonly fields when adding new order
+            return [f for f in fields if f not in self.readonly_fields]
+        return fields
 

@@ -23,6 +23,18 @@ urlpatterns = [
         name='floor_plan'
     ),
     path(
+        'orders/',
+        views.orders_list,
+        name='orders_list'
+    ),
+    path(
+        'orders/<int:order_id>',
+        views.order_details,
+        name='order_detail'
+    ),
+    path('order/<int:order_id>/receipt/', views.generate_receipt, name='view_receipt'),
+    path('order/<int:order_id>/receipt/download/', views.generate_receipt, name='download_receipt'),
+    path(
         'api/booking/',
         BookingAPIView.as_view(),
         name='booking_create'

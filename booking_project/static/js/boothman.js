@@ -446,11 +446,7 @@ const BoothManager = {
     </button>
 </div>
                                 </div>
-                            </form>
-                        </div>
-                    </div>
-
-                    <div class="space-y-6 border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                                <div class="space-y-6 border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
                         <h3 class="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
                             <svg class="w-5 h-5 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -463,7 +459,7 @@ const BoothManager = {
                             <div class="grid grid-cols-2 gap-4">
                                 <!-- Cash Option -->
                                 <label class="relative group">
-                                    <input type="radio" name="payment_type" value="cash" class="peer sr-only">
+                                    <input type="radio" name="payment_method" value="cash" class="peer sr-only">
                                     <div class="p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 cursor-pointer
                                                 transition-all duration-300 hover:border-blue-500/50 dark:hover:border-blue-400/50
                                                 peer-checked:border-blue-500 dark:peer-checked:border-blue-400
@@ -484,7 +480,7 @@ const BoothManager = {
 
                                 <!-- Mobile Money Option -->
                                 <label class="relative group">
-                                    <input type="radio" name="payment_type" value="mobile" class="peer sr-only">
+                                    <input type="radio" name="payment_method" value="mobile" class="peer sr-only">
                                     <div class="p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 cursor-pointer
                                                 transition-all duration-300 hover:border-blue-500/50 dark:hover:border-blue-400/50
                                                 peer-checked:border-blue-500 dark:peer-checked:border-blue-400
@@ -515,6 +511,11 @@ const BoothManager = {
                             </div>
                         </div>
                     </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    
 
                     <!-- Footer Buttons -->
                     <div class="mt-8 flex justify-end gap-4">
@@ -581,11 +582,11 @@ const BoothManager = {
 
     this.updateCheckoutSummary();
     // Exhibitor field handling
-    $(document).off('click', '#addExhibitor');
-    
+    $(document).off("click", "#addExhibitor");
+
     // Setup single event handler for add exhibitor
-    $('#addExhibitor').on('click', () => {
-        this.addExhibitorField();
+    $("#addExhibitor").on("click", () => {
+      this.addExhibitorField();
     });
 
     $("#exhibitorsContainer").on("click", ".remove-exhibitor", function () {
@@ -603,62 +604,106 @@ const BoothManager = {
   },
 
   setupPaymentListeners() {
-    $(".payment-method-btn").on("click", function () {
-      $(".payment-method-btn")
-        .removeClass("border-blue-500 dark:border-blue-400")
-        .addClass("border-gray-200 dark:border-gray-700");
-      $(this)
-        .removeClass("border-gray-200 dark:border-gray-700")
-        .addClass("border-blue-500 dark:border-blue-400");
-
-      const paymentType = $(this).data("payment");
-      $("#mobilePaymentDetails").toggleClass(
-        "hidden",
-        paymentType !== "mobile"
-      );
+    // Listen for payment method radio button changes
+    $('input[name="payment_method"]').on('change', function() {
+      const isMobile = $(this).val() === 'mobile';
+      $('#mobileProviders').toggleClass('hidden', !isMobile);
+      
+      if (isMobile) {
+        // Re-render payment methods when mobile is selected
+        const providersHtml = BoothManager.renderPaymentMethods();
+        $('#mobileProviders .grid').html(providersHtml);
+      }
     });
 
-    $(".mobile-provider-btn").on("click", function () {
-      $(".mobile-provider-btn")
-        .removeClass("border-blue-500 dark:border-blue-400")
-        .addClass("border-gray-200 dark:border-gray-700");
-      $(this)
-        .removeClass("border-gray-200 dark:border-gray-700")
-        .addClass("border-blue-500 dark:border-blue-400");
+    // Delegate click handler for payment method cards
+    $(document).on('click', '.payment-method-card', function() {
+      // Remove selected state from all cards
+      $('.payment-method-card').attr('data-selected', 'false');
+      // Add selected state to clicked card
+      $(this).attr('data-selected', 'true');
 
-      BoothManager.state.selectedPaymentMethod = {
-        provider: $(this).data("provider"),
-        number: $(this).find("p:last").text(),
-      };
+      const methodId = $(this).data('method-id');
+      BoothManager.state.selectedPaymentMethod = methodId;
     });
 
-    // Copy number functionality
-    $(document).on("click", ".copy-number", function (e) {
+    // Handle copy button clicks
+    $(document).on('click', '.copy-btn', function(e) {
       e.preventDefault();
       e.stopPropagation();
 
-      const $button = $(this);
-      const number = $button.data("number");
-      const $feedback = $button.find(".copy-feedback");
+      const number = $(this).data('number');
+      const $feedback = $(this).find('.copy-feedback');
 
-      navigator.clipboard
-        .writeText(number)
+      navigator.clipboard.writeText(number)
         .then(() => {
-          $feedback.css("opacity", "1");
+          $feedback.css('opacity', '1');
           setTimeout(() => {
-            $feedback.css("opacity", "0");
+            $feedback.css('opacity', '0');
           }, 1500);
         })
         .catch(() => {
-          $feedback.text("Failed to copy").css("opacity", "1");
+          $feedback.text('Failed to copy').css('opacity', '1');
           setTimeout(() => {
-            $feedback.css("opacity", "0");
+            $feedback.css('opacity', '0');
             setTimeout(() => {
-              $feedback.text("Copied!");
+              $feedback.text('Copied!');
             }, 200);
           }, 1500);
         });
     });
+  },
+
+  renderPaymentMethods() {
+    if (!Array.isArray(this.state.paymentMethods) || this.state.paymentMethods.length === 0) {
+      return '<p class="text-gray-500 dark:text-gray-400">No payment methods available</p>';
+    }
+
+    return this.state.paymentMethods.map(method => `
+      <div class="payment-method-card group" data-method-id="${method.id}" data-selected="false">
+        <div class="relative p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700
+                    hover:border-blue-500/50 dark:hover:border-blue-400/50
+                    hover:shadow-lg hover:-translate-y-0.5
+                    transition-all duration-300 ease-out">
+            
+            <!-- Selection Indicator -->
+            <div class="absolute top-3 right-3 opacity-0 scale-0 group-data-[selected=true]:opacity-100 
+                        group-data-[selected=true]:scale-100 transition-all duration-300">
+                <div class="w-6 h-6 rounded-full bg-blue-500 dark:bg-blue-400 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <!-- Provider Details -->
+                <div class="flex-1">
+                    <p class="font-medium text-gray-900 dark:text-white mb-1">${method.name}</p>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-gray-500 dark:text-gray-400">${method.number}</span>
+                        <button class="copy-btn p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700
+                                     focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400
+                                     transition-all duration-200"
+                                data-number="${method.number}">
+                            <svg class="w-4 h-4 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 
+                                      transition-colors duration-200" 
+                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                            <span class="copy-feedback absolute -bottom-8 left-1/2 transform -translate-x-1/2
+                                       px-2 py-1 bg-black/75 text-white text-xs rounded
+                                       opacity-0 transition-opacity duration-200">
+                                Copied!
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+    `).join('');
   },
 
   // Close checkout modal
@@ -733,11 +778,12 @@ const BoothManager = {
       contact: formData.find((f) => f.name === "contact").value,
       email: formData.find((f) => f.name === "email").value,
       phone: formData.find((f) => f.name === "phone").value,
+      payment_method: formData.find((f) => f.name === "payment_method").value,
       exhibitors: formData
         .filter((f) => f.name === "exhibitors[]")
         .map((f) => f.value),
     };
-
+    console.log(payload);
     try {
       // Show loading state
       Swal.fire({
@@ -860,74 +906,10 @@ const BoothManager = {
       )
     );
   },
-
-  renderPaymentMethods() {
-    if (
-      !Array.isArray(this.state.paymentMethods) ||
-      this.state.paymentMethods.length === 0
-    ) {
-      return '<p class="text-gray-500 dark:text-gray-400">No payment methods available</p>';
-    }
-
-    return this.state.paymentMethods
-      .map(
-        (method) => `
-        <div class="payment-method-card group cursor-pointer"
-             data-method-id="${method.id}"
-             onclick="BoothManager.selectPaymentMethod('${method.id}')">
-            <div class="relative p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700
-                        hover:border-blue-500/50 dark:hover:border-blue-400/50
-                        hover:shadow-lg hover:-translate-y-0.5
-                        transition-all duration-300 ease-out">
-                
-                <!-- Selection Indicator -->
-                <div class="absolute top-3 right-3 opacity-0 scale-0 group-data-[selected=true]:opacity-100 
-                            group-data-[selected=true]:scale-100 transition-all duration-300">
-                    <div class="w-6 h-6 rounded-full bg-blue-500 dark:bg-blue-400 flex items-center justify-center">
-                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                        </svg>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-4">
-                    <!-- Provider Details -->
-                    <div class="flex-1">
-                        <p class="font-medium text-gray-900 dark:text-white mb-1">${method.name}</p>
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm text-gray-500 dark:text-gray-400">${method.number}</span>
-                            <button class="copy-btn p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700
-                                         focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400
-                                         transition-all duration-200"
-                                    data-number="${method.number}"
-                                    onclick="event.stopPropagation()"
-                                    title="Copy number">
-                                <svg class="w-4 h-4 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 
-                                          transition-colors duration-200" 
-                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                          d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                                </svg>
-                                <span class="copy-feedback absolute -bottom-8 left-1/2 transform -translate-x-1/2
-                                           px-2 py-1 bg-black/75 text-white text-xs rounded
-                                           opacity-0 transition-opacity duration-200">
-                                    Copied!
-                                </span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `
-      )
-      .join("");
-  },
-
   // Add method for adding new exhibitor fields
   addExhibitorField() {
     const currentFields = $("#exhibitorsContainer .exhibitor-field").length;
-    
+
     const newField = `
     <div class="exhibitor-field flex items-center gap-2 group animate-fadeIn">
         <input type="text" 
@@ -955,5 +937,5 @@ const BoothManager = {
     </div>`;
 
     $("#exhibitorsContainer").append(newField);
-},
+  },
 };

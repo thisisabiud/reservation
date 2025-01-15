@@ -112,6 +112,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+#SESSION SETTINGS
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 60 * 60 * 24 # 1 day
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
