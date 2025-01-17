@@ -33,12 +33,6 @@ class Booth(models.Model):
     def __str__(self):
         return f"{self.event.title} - Booth {self.booth_number}"
 
-    # def clean(self):
-    #     if self.status == BoothStatus.RESERVED and not self.reserved_by:
-    #         raise ValidationError("Reserved booths must have a contact")
-    #     if self.status != BoothStatus.RESERVED and self.reserved_by:
-    #         raise ValidationError("Non-reserved booths cannot have a contact")
-
     @property
     def is_available(self):
         return self.status == BoothStatus.AVAILABLE

@@ -4,11 +4,12 @@ register = template.Library()
 
 @register.filter(name='add_currency')
 def add_currency(value):
-    """Adds TZS currency symbol and formats the number with commas."""
+    """Adds TZS currency symbol and formats the number without decimals."""
     try:
-        # Ensure it's a float for proper formatting
-        value = float(value)
-        formatted_value = "{:,.2f}".format(value)  # Format with commas and 2 decimal places
-        return f"TZS {formatted_value}/="  # Add currency prefix
+        # Convert to integer to remove decimals
+        value = int(float(value))
+        # Format with thousand separator
+        formatted_value = "{:,}".format(value)
+        return f"TZS {formatted_value}/="
     except (ValueError, TypeError):
-        return value  # Return the value as is if it's not a valid number
+        return value

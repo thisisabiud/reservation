@@ -213,7 +213,7 @@
                         {% for item in items %}
                         <tr>
                             <td>{{ item.booth }}</td>
-                            <td>{{ item.price|floatformat:2|add_currency }}</td>
+                            <td>{{ item.price|add_currency }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -232,11 +232,10 @@
 
         <div class="info-section">
             <h2>Order Summary</h2>
-            <div class="total">Total: {{ order.total_price|floatformat:2|add_currency }}</div>
+            <div class="total">Total: {{ order.total_price| add_currency}}</div>
         </div>
 
-        <div class="watermark" style="--dynamic-watermark-color: var(--status-{{ order.status }});">{{
-            order.status|upper }}</div>
+        <div class="watermark" style="--dynamic-watermark-color: var(--status-{{ order.status }});">{{ order.status|upper }}</div>
     </div>
 </body>
 

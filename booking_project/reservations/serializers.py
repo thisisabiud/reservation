@@ -1,10 +1,7 @@
 from rest_framework import serializers
-from django.utils import timezone
-from django.db import transaction
 
 from reservations.models.event import PaymentMethod
-from .models import Booth, Contact, Booking, Event
-from .models.choices import BoothStatus
+from .models import Booth, Contact, Event
 
 
 class PaymentMethodSerializer(serializers.ModelSerializer):
@@ -42,18 +39,3 @@ class BoothSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
     
    
-
-class BookingSerializer(serializers.ModelSerializer):
-    contact = ContactSerializer()
-    selected_booths = serializers.ListField(
-        child=serializers.CharField(),
-        write_only=True
-    )
-
-    class Meta:
-        model = Booking
-        fields = [
-            'id', 'booth', 'contact', 'is_confirmed',
-            'confirmation_date', 'selected_booths'
-        ]
-        read_only_fields = ['is_confirmed', 'confirmation_date']

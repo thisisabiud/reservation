@@ -4,6 +4,16 @@ from reservations.models.choices import BoothStatus
 
 class Event(models.Model):
     title = models.CharField(max_length=200)
+    standard_features = models.TextField(
+        null=True, 
+        blank=True,
+        help_text="Enter standard features, separated by commas (e.g., 'WiFi, Table, Chairs')"
+    )
+    premium_features = models.TextField(
+        null=True, 
+        blank=True,
+        help_text="Enter premium features, separated by commas (e.g., 'WiFi, VIP Table, Premium Chairs')"
+    )
     description = models.TextField(null=True, blank=True)
     standard_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     premium_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -17,6 +27,14 @@ class Event(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+
+    @property
+    def get_standard_features(self):
+        return [feature.strip() for feature in (self.standard_features or '').split(',') if feature.strip()]
+    
+    @property
+    def get_premium_features(self):
+        return [feature.strip() for feature in (self.premium_features or '').split(',') if feature.strip()]
     def __str__(self):
         return self.title
 
@@ -46,3 +64,4 @@ class PaymentMethod(models.Model):
 
     def __str__(self):
         return self.name
+    

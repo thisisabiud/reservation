@@ -1,16 +1,13 @@
 from django.shortcuts import get_object_or_404
 from reservations.models.choices import BoothStatus, OrderStatus
 from rest_framework import viewsets, status
-from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.views import APIView
 from django.db import transaction
-from django.utils import timezone
-from reservations.models import Booth, Contact, Booking, Event
-from reservations.models.contact import Exhibitor
+from reservations.models import Booth, Contact, Event
 from reservations.models.order import Order, OrderItem
-from reservations.serializers import BoothSerializer, ContactSerializer, BookingSerializer, EventSerializer
+from reservations.serializers import BoothSerializer, ContactSerializer, EventSerializer
 
 
 class EventAPIView(APIView):

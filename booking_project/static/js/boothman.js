@@ -20,50 +20,74 @@ const BoothManager = {
   },
 
   async fetchBooths(boothType = "all") {
+    // Show loading state
+    Swal.fire({
+        title: 'Loading Booths...',
+        text: 'Please wait while we fetch the booth information',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
     try {
-      // Update URL with new booth type
-      const url = new URL(window.location.href);
-      url.searchParams.set("booth_type", boothType);
-      window.history.pushState({}, "", url);
+        // Update URL with new booth type
+        const url = new URL(window.location.href);
+        url.searchParams.set("booth_type", boothType);
+        window.history.pushState({}, "", url);
 
-      // Update floor plan
-      this.updateFloorPlan(boothType);
+        // Update floor plan
+        this.updateFloorPlan(boothType);
 
-      // Fetch booths
-      const apiUrl = new URL("/api/booths", window.location.origin);
-      apiUrl.searchParams.append("event_id", this.state.eventId);
-      apiUrl.searchParams.append("booth_type", boothType);
+        // Fetch booths
+        const apiUrl = new URL("/api/booths", window.location.origin);
+        apiUrl.searchParams.append("event_id", this.state.eventId);
+        apiUrl.searchParams.append("booth_type", boothType);
 
-      const response = await fetch(apiUrl);
-      const boothsData = await response.json();
+        const response = await fetch(apiUrl);
+        const boothsData = await response.json();
 
-      console.log("Fetched booth data:", boothsData);
+        if (!response.ok) {
+            throw new Error(boothsData.error || "Failed to fetch booths");
+        }
 
-      if (!response.ok) {
-        throw new Error(boothsData.error || "Failed to fetch booths");
-      }
+        // Clear and update booths collection
+        this.state.booths.clear();
+        boothsData.forEach((booth) => {
+            this.state.booths.set(booth.booth_number, booth);
+        });
 
-      // Clear and update booths collection
-      this.state.booths.clear();
-      boothsData.forEach((booth) => {
-        console.log("Adding booth:", booth);
-        this.state.booths.set(booth.booth_number, booth);
-      });
+        // Render the fetched booths
+        this.renderBooths();
 
-      // Render the fetched booths
-      this.renderBooths();
-      Swal.close();
-      return boothsData;
+        // Show success message
+        Swal.fire({
+            title: 'Success!',
+            text: 'Booths loaded successfully',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+        });
+
+        return boothsData;
     } catch (error) {
-      console.error("Error fetching booths:", error);
-      Swal.fire({
-        title: "Error",
-        text: error.message,
-        icon: "error",
-      });
-      return [];
+        console.error("Error fetching booths:", error);
+        Swal.fire({
+            title: "Error Loading Booths",
+            text: error.message,
+            icon: "error",
+            confirmButtonText: 'Retry',
+            showCancelButton: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.fetchBooths(boothType);
+            }
+        });
+        return [];
     }
-  },
+},
 
   async fetchPaymentMethods() {
     try {
@@ -825,7 +849,11 @@ const BoothManager = {
         customClass: {
           popup: "animated fadeInUp faster",
         },
-      });
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.reload();
+        }
+    });
 
       this.state.selectedBooths.clear();
       this.closeCheckoutModal();
