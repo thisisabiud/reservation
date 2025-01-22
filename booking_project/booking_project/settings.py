@@ -25,7 +25,12 @@ SECRET_KEY = 'django-insecure-0f-nv=lx#xb2ta1%y&_v&%wvroq!rj$h!3c%ap&=z)f5asg(4o
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['77.237.237.188', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    'booking.akconcepts.co.tz', 
+    'localhost', 
+    '127.0.0.1'
+]
+
 
 
 # Application definition
@@ -138,7 +143,8 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = '/home/booking_wrapper/booking/booking_project/staticfiles'
+
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
