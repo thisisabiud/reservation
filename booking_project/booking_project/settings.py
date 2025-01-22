@@ -25,7 +25,12 @@ SECRET_KEY = 'django-insecure-0f-nv=lx#xb2ta1%y&_v&%wvroq!rj$h!3c%ap&=z)f5asg(4o
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['77.237.237.188', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    'booking.akconcepts.co.tz', 
+    'localhost', 
+    '127.0.0.1'
+]
+
 
 
 # Application definition
