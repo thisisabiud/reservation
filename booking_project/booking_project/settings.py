@@ -26,8 +26,8 @@ SECRET_KEY = 'django-insecure-0f-nv=lx#xb2ta1%y&_v&%wvroq!rj$h!3c%ap&=z)f5asg(4o
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    'booking.akconcepts.co.tz', 
-    'localhost', 
+    'booking.akconcepts.co.tz',
+    'localhost',
     '127.0.0.1'
 ]
 
@@ -37,7 +37,6 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
-# Add these settings
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
