@@ -30,8 +30,13 @@ ALLOWED_HOSTS = [
     'localhost', 
     '127.0.0.1'
 ]
-SECURE_SSL_REDIRECT = True
+# Comment out or remove SSL redirect if using Nginx for SSL
+SECURE_SSL_REDIRECT = False  # Let Nginx handle SSL redirect
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Add security settings
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 
 
 # Application definition
