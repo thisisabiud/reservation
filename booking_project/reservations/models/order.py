@@ -46,6 +46,14 @@ class Order(models.Model):
         """
         return self.items.aggregate(Sum('price'))['price__sum'] or 0
 
+    def delete(self, *args, **kwargs):
+        for item in self.items.all():
+            booth = item.booth
+            booth.status = BoothStatus.AVAILABLE
+            booth.save()
+        
+        super().delete(*args, **kwargs)
+        
     def save(self, *args, **kwargs):
         if not self.order_number:
             # Get current datetime
@@ -80,6 +88,9 @@ class Order(models.Model):
          
                 
         super().save(*args, **kwargs)
+
+
+
 
 
 class OrderItem(models.Model):
