@@ -51,9 +51,9 @@ class Order(models.Model):
             booth = item.booth
             booth.status = BoothStatus.AVAILABLE
             booth.save()
-        
+
         super().delete(*args, **kwargs)
-        
+    
     def save(self, *args, **kwargs):
         if not self.order_number:
             # Get current datetime
